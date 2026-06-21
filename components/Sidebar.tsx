@@ -3,21 +3,28 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { personalInfo } from "@/lib/data";
+import { usePathname } from "next/navigation";
 
 const navLinks = [
-  { label: "Home", href: "#hero" },
-  { label: "About", href: "#about" },
-  { label: "Skills", href: "#skills" },
-  { label: "Experience", href: "#experience" },
-  { label: "Projects", href: "#projects" },
-  { label: "Contact", href: "#contact" },
+  { label: "Home", href: "/#hero" },
+  { label: "About", href: "/#about" },
+  { label: "Skills", href: "/#skills" },
+  { label: "Experience", href: "/#experience" },
+  { label: "Projects", href: "/#projects" },
+  { label: "Notes", href: "/#notes" },
+  { label: "Contact", href: "/#contact" },
 ];
 
 export default function Sidebar() {
+  const pathname = usePathname();
   const [active, setActive] = useState("hero");
 
   useEffect(() => {
-    const sections = navLinks.map((l) => l.href.replace("#", ""));
+    if (pathname && pathname.startsWith("/notes")) {
+      setActive("notes");
+      return;
+    }
+    const sections = navLinks.map((l) => l.href.split("#")[1]);
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -31,7 +38,7 @@ export default function Sidebar() {
       if (el) observer.observe(el);
     });
     return () => observer.disconnect();
-  }, []);
+  }, [pathname]);
 
   return (
     <aside className="sidebar">
@@ -59,7 +66,7 @@ export default function Sidebar() {
           <li key={link.href}>
             <a
               href={link.href}
-              className={`sidebar-nav-link ${active === link.href.replace("#", "") ? "active" : ""}`}
+              className={`sidebar-nav-link ${active === link.href.split("#")[1] ? "active" : ""}`}
             >
               {link.label}
             </a>
@@ -70,7 +77,7 @@ export default function Sidebar() {
       <div className="sidebar-divider" />
 
       {/* Social links */}
-      <div className="sidebar-social">
+      <div className="sidebar-social" style={{ position: 'relative', zIndex: 2 }}>
         {/* GitHub */}
         <a
           href={personalInfo.links.github}
@@ -120,9 +127,42 @@ export default function Sidebar() {
       </div>
 
       {/* Footer note */}
-      <p className="text-center mt-6" style={{ fontSize: '0.7rem', color: 'var(--text-light)', letterSpacing: '0.04em' }}>
+      <p className="text-center mt-6" style={{ fontSize: '0.7rem', color: 'var(--text-light)', letterSpacing: '0.04em', position: 'relative', zIndex: 2 }}>
         © {new Date().getFullYear()} {personalInfo.name.split(" ")[0]}
       </p>
+
+      {/* Background grifith.gif at the bottom left of sidebar */}
+      <div 
+        className="sidebar-bg-gif"
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          width: '100%',
+          height: '180px',
+          pointerEvents: 'none',
+          zIndex: 1,
+          display: 'flex',
+          justifyContent: 'flex-start',
+          alignItems: 'flex-end',
+          overflow: 'hidden'
+        }}
+      >
+        <img 
+          src="/river.gif" 
+          alt="" 
+          style={{
+            width: '100%',
+            height: 'auto',
+            maxHeight: '100%',
+            objectFit: 'contain',
+            objectPosition: 'left bottom',
+            opacity: 0.45,
+            maskImage: 'radial-gradient(ellipse at bottom left, black 20%, transparent 75%)',
+            WebkitMaskImage: 'radial-gradient(ellipse at bottom left, black 20%, transparent 75%)'
+          }} 
+        />
+      </div>
     </aside>
   );
 }

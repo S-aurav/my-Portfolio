@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
         source: "/api/:path*",
         destination: `${process.env.API_BASE_URL || "http://localhost:8080"}/api/:path*`,
       },
+      {
+        // Proxy local uploads to the backend server
+        source: "/uploads/:path*",
+        destination: `${process.env.API_BASE_URL || "http://localhost:8080"}/uploads/:path*`,
+      },
     ];
   },
 };

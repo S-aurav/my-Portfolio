@@ -15,11 +15,29 @@ const navLinks = [
     ),
   },
   {
+    label: "Projects",
+    href: "/admin/projects",
+    icon: (
+      <svg style={{ width: 16, height: 16 }} fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+      </svg>
+    ),
+  },
+  {
+    label: "Notes",
+    href: "/admin/notes",
+    icon: (
+      <svg style={{ width: 16, height: 16 }} fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    ),
+  },
+  {
     label: "API Registry",
     href: "/admin/registry",
     icon: (
       <svg style={{ width: 16, height: 16 }} fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 00-2 2z" />
       </svg>
     ),
   },
@@ -84,7 +102,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <p style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--text-light)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>
             Coming in Phase 3+
           </p>
-          {["Notes", "Blog", "Files"].map(item => (
+          {["Blog", "Files"].map(item => (
             <p key={item} style={{ fontSize: "0.8rem", color: "var(--text-light)", padding: "6px 12px", fontFamily: "Josefin Sans, sans-serif" }}>
               {item} <span style={{ fontSize: "0.65rem" }}>— soon</span>
             </p>
