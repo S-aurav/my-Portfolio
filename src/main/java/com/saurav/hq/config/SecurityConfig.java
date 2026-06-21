@@ -34,6 +34,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/hq/auth/login").permitAll()
                 // Public GET requests for Portfolio data (projects, notes)
                 .requestMatchers(HttpMethod.GET, "/api/portfolio/**").permitAll()
+                // Local static uploads serving
+                .requestMatchers("/uploads/**").permitAll()
                 // H2 console (dev only)
                 .requestMatchers("/h2-console/**").permitAll()
                 // Actuator health check (Render)

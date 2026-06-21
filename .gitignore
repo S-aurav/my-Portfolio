@@ -1,4 +1,8 @@
 .vscode/
 .mvn/
 target/
+data/
+uploads/
+*.mv.db
+*.trace.db
 
