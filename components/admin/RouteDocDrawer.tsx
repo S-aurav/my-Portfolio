@@ -148,7 +148,7 @@ export default function RouteDocDrawer({ route, onClose }: Props) {
       <div style={{
         position: "fixed", top: 0, right: 0, bottom: 0, zIndex: 1000,
         width: "min(620px, 100vw)",
-        background: "#fff",
+        background: "var(--bg-white)",
         boxShadow: "-4px 0 24px rgba(0,0,0,0.12)",
         transform: isOpen ? "translateX(0)" : "translateX(100%)",
         transition: "transform 0.28s cubic-bezier(0.4,0,0.2,1)",
@@ -159,7 +159,7 @@ export default function RouteDocDrawer({ route, onClose }: Props) {
         <div style={{
           padding: "20px 28px", borderBottom: "1px solid var(--border-light)",
           display: "flex", alignItems: "flex-start", justifyContent: "space-between",
-          position: "sticky", top: 0, background: "#fff", zIndex: 1,
+          position: "sticky", top: 0, background: "var(--bg-white)", zIndex: 1,
         }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
@@ -227,7 +227,7 @@ export default function RouteDocDrawer({ route, onClose }: Props) {
                       width: "100%", padding: "8px 10px",
                       border: "1px solid var(--border-color)", borderRadius: 4,
                       fontSize: "0.82rem", color: "var(--text-primary)",
-                      background: "#fafbfc", outline: "none",
+                      background: "var(--bg-main)", outline: "none",
                       fontFamily: "Inconsolata, monospace",
                       resize: "vertical", lineHeight: 1.5,
                       transition: "border-color 0.18s",
@@ -246,7 +246,7 @@ export default function RouteDocDrawer({ route, onClose }: Props) {
         <div style={{
           padding: "16px 28px", borderTop: "1px solid var(--border-light)",
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          position: "sticky", bottom: 0, background: "#fff",
+          position: "sticky", bottom: 0, background: "var(--bg-white)",
         }}>
           <div>
             {error && <p style={{ fontSize: "0.78rem", color: "#e53e3e", margin: 0 }}>{error}</p>}

@@ -333,7 +333,7 @@ export default function AdminNotes() {
                   </label>
                   <input
                     type="text" value={title} onChange={e => setTitle(e.target.value)} required
-                    style={{ width: "100%", padding: "7px 10px", border: "1px solid var(--border-color)", borderRadius: 4, background: "#fff", color: "var(--text-primary)", outline: "none", fontSize: "0.85rem" }}
+                    style={{ width: "100%", padding: "7px 10px", border: "1px solid var(--border-color)", borderRadius: 4, background: "var(--bg-white)", color: "var(--text-primary)", outline: "none", fontSize: "0.85rem" }}
                   />
                 </div>
                 <div>
@@ -342,7 +342,7 @@ export default function AdminNotes() {
                   </label>
                   <input
                     type="text" value={category} onChange={e => setCategory(e.target.value)} required placeholder="e.g. Tech"
-                    style={{ width: "100%", padding: "7px 10px", border: "1px solid var(--border-color)", borderRadius: 4, background: "#fff", color: "var(--text-primary)", outline: "none", fontSize: "0.85rem" }}
+                    style={{ width: "100%", padding: "7px 10px", border: "1px solid var(--border-color)", borderRadius: 4, background: "var(--bg-white)", color: "var(--text-primary)", outline: "none", fontSize: "0.85rem" }}
                   />
                 </div>
                 <div>
@@ -351,7 +351,7 @@ export default function AdminNotes() {
                   </label>
                   <select
                     value={visibility} onChange={e => setVisibility(e.target.value as any)}
-                    style={{ width: "100%", padding: "7px 10px", border: "1px solid var(--border-color)", borderRadius: 4, background: "#fff", color: "var(--text-primary)", outline: "none", fontSize: "0.85rem" }}
+                    style={{ width: "100%", padding: "7px 10px", border: "1px solid var(--border-color)", borderRadius: 4, background: "var(--bg-white)", color: "var(--text-primary)", outline: "none", fontSize: "0.85rem" }}
                   >
                     <option value="PUBLIC">PUBLIC</option>
                     <option value="PRIVATE">PRIVATE</option>
@@ -361,12 +361,12 @@ export default function AdminNotes() {
               </div>
 
               {/* Formatting Toolbar */}
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", background: "rgba(0,0,0,0.03)", padding: "6px 10px", borderRadius: 4, border: "1px solid var(--border-color)" }}>
-                <button type="button" onClick={() => insertText("**", "**")} style={{ padding: "4px 8px", fontSize: "0.75rem", border: "1px solid var(--border-color)", background: "#fff", borderRadius: 4, cursor: "pointer", fontWeight: "bold" }}>B</button>
-                <button type="button" onClick={() => insertText("*", "*")} style={{ padding: "4px 8px", fontSize: "0.75rem", border: "1px solid var(--border-color)", background: "#fff", borderRadius: 4, cursor: "pointer", fontStyle: "italic" }}>I</button>
-                <button type="button" onClick={() => insertText("### ")} style={{ padding: "4px 8px", fontSize: "0.75rem", border: "1px solid var(--border-color)", background: "#fff", borderRadius: 4, cursor: "pointer" }}>H3</button>
-                <button type="button" onClick={() => insertText("```\n", "\n```")} style={{ padding: "4px 8px", fontSize: "0.75rem", border: "1px solid var(--border-color)", background: "#fff", borderRadius: 4, cursor: "pointer", fontFamily: "monospace" }}>Code</button>
-                <button type="button" onClick={() => insertText("[", "](url)")} style={{ padding: "4px 8px", fontSize: "0.75rem", border: "1px solid var(--border-color)", background: "#fff", borderRadius: 4, cursor: "pointer" }}>Link</button>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", background: "var(--bg-main)", padding: "6px 10px", borderRadius: 4, border: "1px solid var(--border-color)" }}>
+                <button type="button" onClick={() => insertText("**", "**")} style={{ padding: "4px 8px", fontSize: "0.75rem", border: "1px solid var(--border-color)", background: "var(--bg-white)", color: "var(--text-primary)", borderRadius: 4, cursor: "pointer", fontWeight: "bold" }}>B</button>
+                <button type="button" onClick={() => insertText("*", "*")} style={{ padding: "4px 8px", fontSize: "0.75rem", border: "1px solid var(--border-color)", background: "var(--bg-white)", color: "var(--text-primary)", borderRadius: 4, cursor: "pointer", fontStyle: "italic" }}>I</button>
+                <button type="button" onClick={() => insertText("### ")} style={{ padding: "4px 8px", fontSize: "0.75rem", border: "1px solid var(--border-color)", background: "var(--bg-white)", color: "var(--text-primary)", borderRadius: 4, cursor: "pointer" }}>H3</button>
+                <button type="button" onClick={() => insertText("```\n", "\n```")} style={{ padding: "4px 8px", fontSize: "0.75rem", border: "1px solid var(--border-color)", background: "var(--bg-white)", color: "var(--text-primary)", borderRadius: 4, cursor: "pointer", fontFamily: "monospace" }}>Code</button>
+                <button type="button" onClick={() => insertText("[", "](url)")} style={{ padding: "4px 8px", fontSize: "0.75rem", border: "1px solid var(--border-color)", background: "var(--bg-white)", color: "var(--text-primary)", borderRadius: 4, cursor: "pointer" }}>Link</button>
                 <button type="button" onClick={() => fileInputRef.current?.click()} style={{ padding: "4px 8px", fontSize: "0.75rem", border: "1px solid var(--border-color)", background: "rgba(74,144,217,0.1)", color: "var(--accent)", borderRadius: 4, cursor: "pointer", fontWeight: 600 }}>
                   {uploading ? "Uploading..." : "Upload Media 📁"}
                 </button>
@@ -390,7 +390,7 @@ export default function AdminNotes() {
                       placeholder="Write your thoughts in Markdown... Drag & Drop images/gifs/videos here to upload."
                       style={{
                         width: "100%", flex: 1, padding: 12, border: "1px solid var(--border-color)", borderRadius: 4,
-                        background: "#fff", color: "var(--text-primary)", outline: "none", resize: "none",
+                        background: "var(--bg-white)", color: "var(--text-primary)", outline: "none", resize: "none",
                         fontFamily: "monospace", fontSize: "0.85rem", lineHeight: 1.5
                       }}
                     />
@@ -401,7 +401,7 @@ export default function AdminNotes() {
                 {(previewMode === "preview" || previewMode === "split") && (
                   <div style={{
                     flex: 1, border: "1px solid var(--border-color)", borderRadius: 4, padding: 12,
-                    background: "rgba(0,0,0,0.01)", overflowY: "auto", height: "100%"
+                    background: "var(--bg-main)", overflowY: "auto", height: "100%"
                   }}>
                     <div className="markdown-preview" style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6 }}>
                       {content.trim() ? (

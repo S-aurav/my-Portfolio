@@ -148,6 +148,79 @@ export const adminApi = {
       body: formData,
     });
   },
+
+  // Profile
+  getProfile: () =>
+    apiFetch<ApiItemResponse<ProfileEntry>>("/api/hq/admin/profile"),
+
+  saveProfile: (body: ProfileFormData) =>
+    apiFetch<ApiItemResponse<ProfileEntry>>("/api/hq/admin/profile", {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+
+  // Skills
+  getAllSkills: () =>
+    apiFetch<ApiListResponse<SkillEntry>>("/api/hq/admin/skills"),
+
+  createSkill: (body: SkillFormData) =>
+    apiFetch<ApiItemResponse<SkillEntry>>("/api/hq/admin/skills", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  updateSkill: (id: string, body: SkillFormData) =>
+    apiFetch<ApiItemResponse<SkillEntry>>(`/api/hq/admin/skills/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+
+  deleteSkill: (id: string) =>
+    apiFetch<ApiItemResponse<null>>(`/api/hq/admin/skills/${id}`, {
+      method: "DELETE",
+    }),
+
+  // Experience
+  getAllExperience: () =>
+    apiFetch<ApiListResponse<ExperienceEntry>>("/api/hq/admin/experience"),
+
+  createExperience: (body: ExperienceFormData) =>
+    apiFetch<ApiItemResponse<ExperienceEntry>>("/api/hq/admin/experience", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  updateExperience: (id: string, body: ExperienceFormData) =>
+    apiFetch<ApiItemResponse<ExperienceEntry>>(`/api/hq/admin/experience/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+
+  deleteExperience: (id: string) =>
+    apiFetch<ApiItemResponse<null>>(`/api/hq/admin/experience/${id}`, {
+      method: "DELETE",
+    }),
+
+  // Certifications
+  getAllCertifications: () =>
+    apiFetch<ApiListResponse<CertificationEntry>>("/api/hq/admin/certifications"),
+
+  createCertification: (body: CertificationFormData) =>
+    apiFetch<ApiItemResponse<CertificationEntry>>("/api/hq/admin/certifications", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  updateCertification: (id: string, body: CertificationFormData) =>
+    apiFetch<ApiItemResponse<CertificationEntry>>(`/api/hq/admin/certifications/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+
+  deleteCertification: (id: string) =>
+    apiFetch<ApiItemResponse<null>>(`/api/hq/admin/certifications/${id}`, {
+      method: "DELETE",
+    }),
 };
 
 export const publicApi = {
@@ -156,6 +229,18 @@ export const publicApi = {
 
   getNotes: () =>
     apiFetch<ApiListResponse<NoteEntry>>("/api/portfolio/notes", { skipAuth: true }),
+
+  getProfile: () =>
+    apiFetch<ApiItemResponse<ProfileEntry>>("/api/portfolio/profile", { skipAuth: true }),
+
+  getSkills: () =>
+    apiFetch<ApiListResponse<SkillEntry>>("/api/portfolio/skills", { skipAuth: true }),
+
+  getExperience: () =>
+    apiFetch<ApiListResponse<ExperienceEntry>>("/api/portfolio/experience", { skipAuth: true }),
+
+  getCertifications: () =>
+    apiFetch<ApiListResponse<CertificationEntry>>("/api/portfolio/certifications", { skipAuth: true }),
 };
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -223,6 +308,63 @@ export type NoteEntry = {
 };
 
 export type NoteFormData = Omit<NoteEntry, "id" | "createdAt" | "updatedAt">;
+
+export type ProfileEntry = {
+  id: number;
+  name: string;
+  role: string;
+  tagline: string;
+  bio: string;
+  email: string;
+  phone: string;
+  location: string;
+  profileImage: string;
+  githubUrl: string;
+  linkedinUrl: string;
+  leetcodeUrl: string;
+  sectionOrder: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ProfileFormData = Omit<ProfileEntry, "id" | "createdAt" | "updatedAt">;
+
+export type SkillEntry = {
+  id: string;
+  category: string;
+  name: string;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type SkillFormData = Omit<SkillEntry, "id" | "createdAt" | "updatedAt">;
+
+export type ExperienceEntry = {
+  id: string;
+  role: string;
+  company: string;
+  duration: string;
+  type: string;
+  location: string;
+  highlights: string;   // JSON string: ["point1","point2"]
+  techStack: string;    // JSON string: ["Java","Spring"]
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ExperienceFormData = Omit<ExperienceEntry, "id" | "createdAt" | "updatedAt">;
+
+export type CertificationEntry = {
+  id: string;
+  name: string;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CertificationFormData = Omit<CertificationEntry, "id" | "createdAt" | "updatedAt">;
 
 type ApiListResponse<T> = { success: boolean; message: string; data: T[] };
 type ApiItemResponse<T> = { success: boolean; message: string; data: T };

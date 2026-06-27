@@ -44,6 +44,8 @@ export default function RegistryTable({ routes, onToggle, onDelete, onEdit, onDo
   }
 
   async function handleToggle(id: string, current: boolean) {
+    const action = current ? "disable" : "enable";
+    if (!confirm(`Are you sure you want to ${action} this API route?`)) return;
     await adminApi.toggleRoute(id, !current);
     onToggle(id, !current);
   }
@@ -96,7 +98,7 @@ export default function RegistryTable({ routes, onToggle, onDelete, onEdit, onDo
           <div className="card" style={{ padding: 0, overflow: "hidden" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ borderBottom: "1px solid var(--border-light)", background: "#fafbfc" }}>
+                <tr style={{ borderBottom: "1px solid var(--border-light)", background: "var(--bg-main)" }}>
                   {HEADERS.map(h => (
                     <th key={h} style={{
                       padding: "10px 16px", textAlign: "left",
@@ -124,11 +126,14 @@ export default function RegistryTable({ routes, onToggle, onDelete, onEdit, onDo
                     >
                       {/* Method */}
                       <td style={{ padding: "12px 16px" }}>
-                        <span style={{
-                          padding: "2px 8px", borderRadius: 3,
-                          background: methodStyle.bg, color: methodStyle.color,
-                          fontFamily: "Inconsolata, monospace", fontSize: "0.76rem", fontWeight: 700,
-                        }}>
+                        <span
+                          className={`method-badge method-${route.method}`}
+                          style={{
+                            padding: "2px 8px", borderRadius: 3,
+                            background: methodStyle.bg, color: methodStyle.color,
+                            fontFamily: "Inconsolata, monospace", fontSize: "0.76rem", fontWeight: 700,
+                          }}
+                        >
                           {route.method}
                         </span>
                       </td>
@@ -182,6 +187,7 @@ export default function RegistryTable({ routes, onToggle, onDelete, onEdit, onDo
                         <button
                           id={`route-toggle-${route.id}`}
                           onClick={() => handleToggle(route.id, route.enabled)}
+                          className={`route-status-toggle ${route.enabled ? "enabled" : "disabled"}`}
                           style={{
                             padding: "4px 12px", borderRadius: 12,
                             border: `1px solid ${route.enabled ? "#48bb78" : "#cbd5e0"}`,

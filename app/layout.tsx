@@ -43,10 +43,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function() {
+            try {
+              var savedTheme = localStorage.getItem('theme');
+              var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+              if (savedTheme === 'dark' || (!savedTheme && systemDark)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+              } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+              }
+            } catch (e) {}
+          })();
+        `}} />
       </head>
       <body className="antialiased">{children}</body>
     </html>

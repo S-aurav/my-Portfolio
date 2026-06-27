@@ -139,7 +139,7 @@ export default function RegistryPage() {
             width: "100%", maxWidth: 480, padding: "9px 14px",
             border: "1px solid var(--border-color)", borderRadius: 4,
             fontSize: "0.85rem", color: "var(--text-primary)",
-            background: "#fff", outline: "none",
+            background: "var(--bg-white)", outline: "none",
             fontFamily: "Inconsolata, monospace",
             transition: "border-color 0.18s",
           }}

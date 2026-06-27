@@ -24,6 +24,119 @@
   --shadow-md: 0 2px 12px rgba(0,0,0,0.08);
 }
 
+[data-theme="dark"] {
+  --bg-main: #0c0f12;
+  --bg-white: #13171c;
+  --bg-sidebar: #13171c;
+  --border-color: #212830;
+  --border-light: #1c2128;
+  --text-primary: #f0f3f6;
+  --text-secondary: #c9d1d9;
+  --text-muted: #8b949e;
+  --text-light: #484f58;
+  --accent: #58a6ff;
+  --accent-hover: #1f6feb;
+  --tag-bg: #1c2128;
+  --tag-color: #58a6ff;
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.25);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.35);
+}
+
+body, .sidebar, .card, .section-title::after, .sidebar-divider, .timeline::before, .skill-pill {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+[data-theme="dark"] .markdown-preview code {
+  color: #c9d1d9;
+  background: rgba(110, 118, 129, 0.4);
+}
+
+[data-theme="dark"] .markdown-preview pre {
+  background: #161b22;
+}
+
+[data-theme="dark"] .markdown-preview pre code {
+  color: #c9d1d9;
+}
+
+[data-theme="dark"] .markdown-preview th {
+  background: var(--border-light);
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background-color: var(--bg-white) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Theme Toggle Button placement & style */
+.theme-toggle {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  z-index: 10;
+  transition: all 0.18s ease;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(74, 144, 217, 0.05);
+}
+
+@media (max-width: 768px) {
+  .theme-toggle {
+    position: static !important;
+    margin-top: 10px;
+  }
+}
+
+/* Dark theme overrides for method badges */
+[data-theme="dark"] .method-badge.method-GET {
+  background-color: rgba(43, 108, 176, 0.25) !important;
+  color: #90cdf4 !important;
+}
+[data-theme="dark"] .method-badge.method-POST {
+  background-color: rgba(39, 103, 73, 0.25) !important;
+  color: #9ae6b4 !important;
+}
+[data-theme="dark"] .method-badge.method-PUT {
+  background-color: rgba(192, 86, 33, 0.25) !important;
+  color: #fbd38d !important;
+}
+[data-theme="dark"] .method-badge.method-PATCH {
+  background-color: rgba(107, 70, 193, 0.25) !important;
+  color: #d6bcfa !important;
+}
+[data-theme="dark"] .method-badge.method-DELETE {
+  background-color: rgba(197, 48, 48, 0.25) !important;
+  color: #feb2b2 !important;
+}
+
+/* Dark theme overrides for route status toggles */
+[data-theme="dark"] .route-status-toggle.enabled {
+  background-color: rgba(72, 187, 120, 0.15) !important;
+  color: #48bb78 !important;
+  border-color: #48bb78 !important;
+}
+[data-theme="dark"] .route-status-toggle.disabled {
+  background-color: rgba(160, 174, 192, 0.15) !important;
+  color: #a0aec0 !important;
+  border-color: #4a5568 !important;
+}
+
 /* ============================================
    BASE RESET
    ============================================ */
@@ -139,7 +252,7 @@ body {
 .sidebar-nav li a {
   display: block;
   padding: 8px 12px;
-  border-radius: 4px;
+  border-radius: 0;
   font-family: 'Josefin Sans', sans-serif;
   font-size: 0.85rem;
   font-weight: 600;
@@ -218,7 +331,7 @@ body {
 .card {
   background: var(--bg-white);
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: 0;
   padding: 24px 28px;
   box-shadow: var(--shadow-sm);
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
@@ -235,7 +348,7 @@ body {
 .tag {
   display: inline-block;
   padding: 3px 10px;
-  border-radius: 3px;
+  border-radius: 0;
   background: var(--tag-bg);
   color: var(--tag-color);
   font-family: 'Inconsolata', monospace;
@@ -286,7 +399,7 @@ body {
   display: inline-flex;
   align-items: center;
   padding: 5px 14px;
-  border-radius: 3px;
+  border-radius: 0;
   border: 1px solid var(--border-color);
   background: var(--bg-white);
   font-family: 'Inconsolata', monospace;
@@ -431,7 +544,7 @@ a.link-accent:hover {
   background: rgba(175, 184, 193, 0.2);
   color: #24292f;
   padding: 0.2em 0.4em;
-  border-radius: 6px;
+  border-radius: 0;
   font-size: 85%;
 }
 
@@ -439,7 +552,7 @@ a.link-accent:hover {
   background: #f6f8fa;
   border: 1px solid var(--border-color);
   padding: 16px;
-  border-radius: 6px;
+  border-radius: 0;
   overflow-x: auto;
   margin-bottom: 1rem;
 }
@@ -483,7 +596,7 @@ a.link-accent:hover {
 .markdown-preview video {
   max-width: 100%;
   height: auto;
-  border-radius: 6px;
+  border-radius: 0;
   margin: 1rem 0;
   box-shadow: var(--shadow-sm);
 }
@@ -515,7 +628,7 @@ a.link-accent:hover {
   max-width: 1000px;
   background: var(--bg-white);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 0;
   padding: 40px;
   box-shadow: var(--shadow-sm);
 }
@@ -548,7 +661,7 @@ a.link-accent:hover {
   top: 48px;
   background: var(--bg-white);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 0;
   padding: 24px;
   box-shadow: var(--shadow-sm);
   max-height: calc(100vh - 96px);
@@ -576,7 +689,7 @@ a.link-accent:hover {
 .notes-sidebar-item-link {
   display: block;
   padding: 10px 14px;
-  border-radius: 6px;
+  border-radius: 0;
   border-left: 3px solid transparent;
   transition: all 0.2s ease;
   text-decoration: none;

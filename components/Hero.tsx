@@ -1,10 +1,25 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { personalInfo } from "@/lib/data";
+import { publicApi, ProfileEntry } from "@/lib/api";
 import { useScrollReveal } from "@/lib/hooks";
 
 export default function Hero() {
   const ref = useScrollReveal();
+  const [profile, setProfile] = useState<ProfileEntry | null>(null);
+
+  useEffect(() => {
+    publicApi.getProfile()
+      .then(res => { if (res.data) setProfile(res.data); })
+      .catch(() => { /* silently fall back to static data */ });
+  }, []);
+
+  const name     = profile?.name      ?? personalInfo.name;
+  const role     = profile?.role      ?? personalInfo.role;
+  const location = profile?.location  ?? personalInfo.location;
+  const tagline  = profile?.tagline   ?? personalInfo.tagline;
+  const email    = profile?.email     ?? personalInfo.email;
 
   return (
     <section id="hero" className="section" style={{ paddingTop: 0 }}>
@@ -16,20 +31,20 @@ export default function Hero() {
 
         {/* Name headline */}
         <h2 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '2.2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '10px', lineHeight: 1.2 }}>
-          I'm <span style={{ color: 'var(--accent)' }}>{personalInfo.name}</span>
+          I'm <span style={{ color: 'var(--accent)' }}>{name}</span>
         </h2>
 
         {/* Role */}
         <p style={{ fontFamily: 'Josefin Sans, sans-serif', fontSize: '1rem', fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '20px' }}>
-          {personalInfo.role} · {personalInfo.location}
+          {role} · {location}
         </p>
 
         {/* Divider */}
-        <div style={{ width: '48px', height: '2px', background: 'var(--accent)', marginBottom: '20px', borderRadius: '1px' }} />
+        <div style={{ width: '48px', height: '2px', background: 'var(--accent)', marginBottom: '20px', borderRadius: '0' }} />
 
         {/* Tagline */}
         <p style={{ fontSize: '1rem', color: 'var(--text-secondary)', lineHeight: 1.8, maxWidth: '600px' }}>
-          {personalInfo.tagline}
+          {tagline}
         </p>
 
         {/* Quick action links */}
@@ -43,7 +58,7 @@ export default function Hero() {
               gap: '6px',
               padding: '9px 22px',
               border: '1px solid var(--accent)',
-              borderRadius: '3px',
+              borderRadius: '0px',
               color: 'var(--accent)',
               fontFamily: 'Josefin Sans, sans-serif',
               fontSize: '0.8rem',
@@ -66,14 +81,14 @@ export default function Hero() {
           </a>
           <a
             id="hero-contact"
-            href={`mailto:${personalInfo.email}`}
+            href={`mailto:${email}`}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
               padding: '9px 22px',
               border: '1px solid var(--border-color)',
-              borderRadius: '3px',
+              borderRadius: '0px',
               color: 'var(--text-secondary)',
               fontFamily: 'Josefin Sans, sans-serif',
               fontSize: '0.8rem',

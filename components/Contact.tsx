@@ -47,7 +47,7 @@ export default function Contact() {
                 gap: '8px',
                 padding: '11px 28px',
                 border: '1px solid var(--accent)',
-                borderRadius: '3px',
+                borderRadius: '0px',
                 color: 'var(--accent)',
                 fontFamily: 'Josefin Sans, sans-serif',
                 fontSize: '0.82rem',
@@ -96,7 +96,7 @@ export default function Contact() {
                   style={{
                     padding: '7px 18px',
                     border: '1px solid var(--border-color)',
-                    borderRadius: '3px',
+                    borderRadius: '0px',
                     fontSize: '0.78rem',
                     fontWeight: 600,
                     color: 'var(--text-muted)',
