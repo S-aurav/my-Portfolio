@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { experiences as staticExperiences } from "@/lib/data";
-import { publicApi, ExperienceEntry } from "@/lib/api";
+import { ExperienceEntry } from "@/lib/api";
 import { useScrollReveal } from "@/lib/hooks";
 
 function safeParseArray(json: string | null | undefined): string[] {
@@ -10,30 +10,41 @@ function safeParseArray(json: string | null | undefined): string[] {
   try { return JSON.parse(json); } catch { return []; }
 }
 
-export default function Experience() {
+export default function Experience({ initialExperience }: { initialExperience?: ExperienceEntry[] }) {
   const ref = useScrollReveal();
-  const [items, setItems] = useState<ExperienceEntry[] | null>(null);
 
   useEffect(() => {
-    publicApi.getExperience()
-      .then(res => { if (res.data?.length) setItems(res.data); })
-      .catch(() => {});
-  }, []);
+    if (initialExperience && initialExperience.length > 0) {
+      localStorage.setItem("cached_experience", JSON.stringify(initialExperience));
+    }
+  }, [initialExperience]);
 
-  // If API returned data, use it; otherwise fall back to static data shaped as ExperienceEntry
-  const experiences = items ?? staticExperiences.map((e, i) => ({
-    id: String(i),
-    role: e.role,
-    company: e.company,
-    duration: e.duration,
-    type: e.type,
-    location: e.location,
-    highlights: JSON.stringify(e.highlights),
-    techStack: JSON.stringify(e.techStack ?? []),
-    displayOrder: i,
-    createdAt: '',
-    updatedAt: '',
-  }));
+  const experiences: ExperienceEntry[] = initialExperience && initialExperience.length > 0
+    ? initialExperience
+    : (() => {
+        if (typeof window !== "undefined") {
+          const cached = localStorage.getItem("cached_experience");
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              if (parsed && parsed.length > 0) return parsed as ExperienceEntry[];
+            } catch {}
+          }
+        }
+        return staticExperiences.map((e, i) => ({
+          id: String(i),
+          role: e.role,
+          company: e.company,
+          duration: e.duration,
+          type: e.type,
+          location: e.location,
+          highlights: JSON.stringify(e.highlights),
+          techStack: JSON.stringify(e.techStack ?? []),
+          displayOrder: i,
+          createdAt: '',
+          updatedAt: '',
+        }));
+      })();
 
   return (
     <section id="experience" className="section">

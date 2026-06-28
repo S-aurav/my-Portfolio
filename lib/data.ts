@@ -6,7 +6,7 @@ export const personalInfo = {
   email: "yadavsaurav818@gmail.com",
   phone: "+91 1234567890",
   location: "Pune, India",
-  profileImage: "/profile.png?v=2",
+  profileImage: "/profile.png",
   links: {
     github: "https://github.com/S-aurav",
     linkedin: "https://linkedin.com/in/sauravyadav2004/",

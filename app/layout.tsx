@@ -37,11 +37,24 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+import { publicApi } from "@/lib/api";
+import { ProfileProvider } from "@/context/ProfileContext";
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  let profile = null;
+  try {
+    const res = await publicApi.getProfile();
+    if (res?.success && res?.data) {
+      profile = res.data;
+    }
+  } catch (err) {
+    console.error("Failed to fetch profile in root layout:", err);
+  }
+
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <head>
@@ -61,7 +74,11 @@ export default function RootLayout({
           })();
         `}} />
       </head>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <ProfileProvider initialData={profile}>
+          {children}
+        </ProfileProvider>
+      </body>
     </html>
   );
 }

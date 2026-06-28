@@ -1,31 +1,39 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Image from "next/image";
 import { personalInfo, certifications as staticCerts } from "@/lib/data";
-import { publicApi, ProfileEntry, CertificationEntry } from "@/lib/api";
+import { CertificationEntry } from "@/lib/api";
 import { useScrollReveal } from "@/lib/hooks";
+import { useProfile } from "@/context/ProfileContext";
 
-export default function About() {
+export default function About({ initialCerts }: { initialCerts?: CertificationEntry[] }) {
   const ref = useScrollReveal();
-  const [profile, setProfile] = useState<ProfileEntry | null>(null);
-  const [certs, setCerts] = useState<CertificationEntry[] | null>(null);
+  const { profile } = useProfile();
 
   useEffect(() => {
-    publicApi.getProfile()
-      .then(res => { if (res.data) setProfile(res.data); })
-      .catch(() => {});
-    publicApi.getCertifications()
-      .then(res => { if (res.data?.length) setCerts(res.data); })
-      .catch(() => {});
-  }, []);
+    if (initialCerts && initialCerts.length > 0) {
+      localStorage.setItem("cached_certs", JSON.stringify(initialCerts));
+    }
+  }, [initialCerts]);
 
   const name         = profile?.name        ?? personalInfo.name;
   const bio          = profile?.bio         ?? personalInfo.bio;
   const location     = profile?.location    ?? personalInfo.location;
   const email        = profile?.email       ?? personalInfo.email;
   const profileImage = profile?.profileImage || personalInfo.profileImage;
-  const certList     = certs ?? staticCerts.map((c, i) => ({ id: String(i), name: c, displayOrder: i, createdAt: '', updatedAt: '' }));
+  
+  const certList: CertificationEntry[] = initialCerts && initialCerts.length > 0
+    ? initialCerts
+    : (() => {
+        if (typeof window !== "undefined") {
+          const cached = localStorage.getItem("cached_certs");
+          if (cached) {
+            try { return JSON.parse(cached) as CertificationEntry[]; } catch {}
+          }
+        }
+        return staticCerts.map((c, i) => ({ id: String(i), name: c, displayOrder: i, createdAt: '', updatedAt: '' }));
+      })();
 
   return (
     <section id="about" className="section">
@@ -44,7 +52,7 @@ export default function About() {
                 height={120}
                 className="object-cover"
                 sizes="120px"
-                unoptimized={true}
+                unoptimized={profileImage.startsWith("http://") || profileImage.startsWith("https://")}
               />
             </div>
           </div>

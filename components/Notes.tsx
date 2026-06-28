@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { publicApi, NoteEntry } from "@/lib/api";
+import { useState, useEffect } from "react";
+import { NoteEntry } from "@/lib/api";
 import { useScrollReveal } from "@/lib/hooks";
 import Link from "next/link";
 
@@ -17,27 +17,30 @@ function getNoteSummary(content: string): string {
     .trim();
 }
 
-export default function Notes() {
+export default function Notes({ initialNotes }: { initialNotes?: NoteEntry[] }) {
   const ref = useScrollReveal();
-  const [notes, setNotes] = useState<NoteEntry[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    publicApi.getNotes()
-      .then(res => {
-        if (res.success && res.data && res.data.length > 0) {
-          setNotes(res.data);
-        } else {
-          setNotes(getFallbackNotes());
-        }
-      })
-      .catch(() => {
-        setNotes(getFallbackNotes());
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
+    if (initialNotes && initialNotes.length > 0) {
+      localStorage.setItem("cached_notes", JSON.stringify(initialNotes));
+    }
+  }, [initialNotes]);
+
+  const [notes] = useState<NoteEntry[]>(() => {
+    if (initialNotes && initialNotes.length > 0) {
+      return initialNotes;
+    }
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("cached_notes");
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (parsed && parsed.length > 0) return parsed;
+        } catch {}
+      }
+    }
+    return getFallbackNotes();
+  });
 
   function getFallbackNotes(): NoteEntry[] {
     return [
@@ -68,11 +71,7 @@ export default function Notes() {
         <h2 className="section-title">Notes</h2>
         <p className="section-subtitle">Logs & knowledge snippets</p>
 
-        {loading ? (
-          <div style={{ textAlign: "center", padding: "40px" }}>
-            <p style={{ color: "var(--text-light)" }}>Loading notes...</p>
-          </div>
-        ) : (
+        {false ? null : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {notes.map((note) => {
               const isLong = note.content.length > 220;

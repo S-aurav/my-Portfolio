@@ -1,33 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { publicApi, ProjectEntry } from "@/lib/api";
+import { useState, useEffect } from "react";
+import { ProjectEntry } from "@/lib/api";
 import { projects as fallbackProjects } from "@/lib/data";
 import { useScrollReveal } from "@/lib/hooks";
 
-export default function Projects() {
+export default function Projects({ initialProjects }: { initialProjects?: ProjectEntry[] }) {
   const ref = useScrollReveal();
-  const [projects, setProjects] = useState<ProjectEntry[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    publicApi.getProjects()
-      .then(res => {
-        if (res.success && res.data && res.data.length > 0) {
-          setProjects(res.data);
-        } else {
-          // Fallback to static mock data if DB is empty
-          setProjects(mapFallbackProjects());
-        }
-      })
-      .catch(() => {
-        // Fallback to static mock data if fetch fails
-        setProjects(mapFallbackProjects());
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
+    if (initialProjects && initialProjects.length > 0) {
+      localStorage.setItem("cached_projects", JSON.stringify(initialProjects));
+    }
+  }, [initialProjects]);
+
+  const [projects] = useState<ProjectEntry[]>(() => {
+    if (initialProjects && initialProjects.length > 0) {
+      return initialProjects;
+    }
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("cached_projects");
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (parsed && parsed.length > 0) return parsed;
+        } catch {}
+      }
+    }
+    return mapFallbackProjects();
+  });
 
   function mapFallbackProjects(): ProjectEntry[] {
     return fallbackProjects.map((p, idx) => ({
@@ -51,11 +52,7 @@ export default function Projects() {
         <h2 className="section-title">Projects</h2>
         <p className="section-subtitle">Things I've built</p>
 
-        {loading ? (
-          <div style={{ textAlign: "center", padding: "40px" }}>
-            <p style={{ color: "var(--text-light)" }}>Loading projects...</p>
-          </div>
-        ) : (
+        {false ? null : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {projects.map((project, i) => {
               const techTags = (project.techStack || "").split(",").map(t => t.trim()).filter(Boolean);

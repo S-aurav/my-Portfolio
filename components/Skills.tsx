@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { skills as staticSkills } from "@/lib/data";
-import { publicApi, SkillEntry } from "@/lib/api";
+import { SkillEntry } from "@/lib/api";
 import { useScrollReveal } from "@/lib/hooks";
 
 type GroupedSkills = { category: string; skills: string[] }[];
@@ -16,17 +16,30 @@ function groupSkills(skills: SkillEntry[]): GroupedSkills {
   return Array.from(map.entries()).map(([category, skills]) => ({ category, skills }));
 }
 
-export default function Skills() {
+export default function Skills({ initialSkills }: { initialSkills?: SkillEntry[] }) {
   const ref = useScrollReveal();
-  const [grouped, setGrouped] = useState<GroupedSkills>(
-    staticSkills.map(g => ({ category: g.category, skills: g.skills.map(s => s.name) }))
-  );
 
   useEffect(() => {
-    publicApi.getSkills()
-      .then(res => { if (res.data?.length) setGrouped(groupSkills(res.data)); })
-      .catch(() => {});
-  }, []);
+    if (initialSkills && initialSkills.length > 0) {
+      localStorage.setItem("cached_skills", JSON.stringify(initialSkills));
+    }
+  }, [initialSkills]);
+
+  const [grouped, setGrouped] = useState<GroupedSkills>(() => {
+    if (initialSkills && initialSkills.length > 0) {
+      return groupSkills(initialSkills);
+    }
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("cached_skills");
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (parsed && parsed.length > 0) return groupSkills(parsed);
+        } catch {}
+      }
+    }
+    return staticSkills.map(g => ({ category: g.category, skills: g.skills.map(s => s.name) }));
+  });
 
   return (
     <section id="skills" className="section">

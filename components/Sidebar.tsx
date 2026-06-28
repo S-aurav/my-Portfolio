@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { personalInfo } from "@/lib/data";
 import { usePathname } from "next/navigation";
-import { publicApi, ProfileEntry } from "@/lib/api";
+import { useProfile } from "@/context/ProfileContext";
 
 const labelMap: Record<string, string> = {
   about: "About",
@@ -20,14 +20,8 @@ const defaultOrder = ["about", "skills", "experience", "projects", "notes", "con
 export default function Sidebar() {
   const pathname = usePathname();
   const [active, setActive] = useState("hero");
-  const [profile, setProfile] = useState<ProfileEntry | null>(null);
+  const { profile } = useProfile();
   const [theme, setTheme] = useState<"light" | "dark">("light");
-
-  useEffect(() => {
-    publicApi.getProfile()
-      .then(res => { if (res.data) setProfile(res.data); })
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     const active = document.documentElement.getAttribute("data-theme") as "light" | "dark" || "light";
@@ -177,7 +171,7 @@ export default function Sidebar() {
           height={100}
           className="object-cover w-full h-full"
           priority
-          unoptimized={true}
+          unoptimized={profileImage.startsWith("http://") || profileImage.startsWith("https://")}
         />
       </div>
 

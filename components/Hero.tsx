@@ -1,19 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { personalInfo } from "@/lib/data";
-import { publicApi, ProfileEntry } from "@/lib/api";
 import { useScrollReveal } from "@/lib/hooks";
+import { useProfile } from "@/context/ProfileContext";
 
 export default function Hero() {
   const ref = useScrollReveal();
-  const [profile, setProfile] = useState<ProfileEntry | null>(null);
-
-  useEffect(() => {
-    publicApi.getProfile()
-      .then(res => { if (res.data) setProfile(res.data); })
-      .catch(() => { /* silently fall back to static data */ });
-  }, []);
+  const { profile } = useProfile();
 
   const name     = profile?.name      ?? personalInfo.name;
   const role     = profile?.role      ?? personalInfo.role;

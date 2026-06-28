@@ -5,7 +5,68 @@
 
 import { getToken, logout } from "./auth";
 
-const BASE = ""; // Requests go to /api/** which next.config.ts proxies to Spring Boot
+const getBaseUrl = () => {
+  if (typeof window === "undefined") {
+    return process.env.API_BASE_URL || "http://localhost:8080";
+  }
+  return "";
+};
+
+// ── In-Memory Public API Cache ────────────────────────────────────────────────
+// Caches GET responses for public endpoints across client-side navigations.
+// The module is loaded once per browser session, so the Map persists as long
+// as the tab is open. TTL defaults to 60 seconds.
+
+const CACHE_TTL_MS = 60_000;
+
+type CacheEntry = { data: unknown; ts: number };
+const _cache = new Map<string, CacheEntry>();
+const _inflight = new Map<string, Promise<unknown>>();
+
+/**
+ * Fetches a public (no-auth) endpoint with in-memory caching.
+ * Concurrent callers for the same URL share a single in-flight Promise,
+ * so even if three components call getProfile() simultaneously only one
+ * network request is made.
+ */
+async function cachedPublicFetch<T>(path: string): Promise<T> {
+  // Bypass in-memory cache on the server side (Node.js)
+  if (typeof window === "undefined") {
+    return apiFetch<T>(path, { skipAuth: true });
+  }
+
+  // Return a valid cached result immediately
+  const hit = _cache.get(path);
+  if (hit && Date.now() - hit.ts < CACHE_TTL_MS) {
+    return hit.data as T;
+  }
+
+  // Deduplicate concurrent requests for the same URL
+  if (_inflight.has(path)) {
+    return _inflight.get(path) as Promise<T>;
+  }
+
+  const promise = apiFetch<T>(path, { skipAuth: true }).then((data) => {
+    _cache.set(path, { data, ts: Date.now() });
+    _inflight.delete(path);
+    return data;
+  }).catch((err) => {
+    _inflight.delete(path);
+    throw err;
+  });
+
+  _inflight.set(path, promise);
+  return promise;
+}
+
+/**
+ * Invalidates one or more public cache entries by URL path.
+ * Call this after a successful admin write/mutation so the next read
+ * reflects the updated data.
+ */
+export function invalidatePublicCache(...paths: string[]): void {
+  paths.forEach(p => _cache.delete(p));
+}
 
 type FetchOptions = RequestInit & { skipAuth?: boolean };
 
@@ -29,7 +90,8 @@ export async function apiFetch<T>(
     if (token) headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${BASE}${path}`, {
+  const baseUrl = getBaseUrl();
+  const res = await fetch(`${baseUrl}${path}`, {
     ...fetchOptions,
     headers,
   });
@@ -106,18 +168,18 @@ export const adminApi = {
     apiFetch<ApiItemResponse<ProjectEntry>>("/api/hq/admin/projects", {
       method: "POST",
       body: JSON.stringify(body),
-    }),
+    }).then((res) => { invalidatePublicCache("/api/portfolio/projects"); return res; }),
 
   updateProject: (id: string, body: ProjectFormData) =>
     apiFetch<ApiItemResponse<ProjectEntry>>(`/api/hq/admin/projects/${id}`, {
       method: "PUT",
       body: JSON.stringify(body),
-    }),
+    }).then((res) => { invalidatePublicCache("/api/portfolio/projects"); return res; }),
 
   deleteProject: (id: string) =>
     apiFetch<ApiItemResponse<null>>(`/api/hq/admin/projects/${id}`, {
       method: "DELETE",
-    }),
+    }).then((res) => { invalidatePublicCache("/api/portfolio/projects"); return res; }),
 
   // Notes
   getAllNotes: () =>
@@ -127,18 +189,18 @@ export const adminApi = {
     apiFetch<ApiItemResponse<NoteEntry>>("/api/hq/admin/notes", {
       method: "POST",
       body: JSON.stringify(body),
-    }),
+    }).then((res) => { invalidatePublicCache("/api/portfolio/notes"); return res; }),
 
   updateNote: (id: string, body: NoteFormData) =>
     apiFetch<ApiItemResponse<NoteEntry>>(`/api/hq/admin/notes/${id}`, {
       method: "PUT",
       body: JSON.stringify(body),
-    }),
+    }).then((res) => { invalidatePublicCache("/api/portfolio/notes"); return res; }),
 
   deleteNote: (id: string) =>
     apiFetch<ApiItemResponse<null>>(`/api/hq/admin/notes/${id}`, {
       method: "DELETE",
-    }),
+    }).then((res) => { invalidatePublicCache("/api/portfolio/notes"); return res; }),
 
   uploadFile: (file: File) => {
     const formData = new FormData();
@@ -157,6 +219,9 @@ export const adminApi = {
     apiFetch<ApiItemResponse<ProfileEntry>>("/api/hq/admin/profile", {
       method: "PUT",
       body: JSON.stringify(body),
+    }).then((res) => {
+      invalidatePublicCache("/api/portfolio/profile");
+      return res;
     }),
 
   // Skills
@@ -167,18 +232,18 @@ export const adminApi = {
     apiFetch<ApiItemResponse<SkillEntry>>("/api/hq/admin/skills", {
       method: "POST",
       body: JSON.stringify(body),
-    }),
+    }).then((res) => { invalidatePublicCache("/api/portfolio/skills"); return res; }),
 
   updateSkill: (id: string, body: SkillFormData) =>
     apiFetch<ApiItemResponse<SkillEntry>>(`/api/hq/admin/skills/${id}`, {
       method: "PUT",
       body: JSON.stringify(body),
-    }),
+    }).then((res) => { invalidatePublicCache("/api/portfolio/skills"); return res; }),
 
   deleteSkill: (id: string) =>
     apiFetch<ApiItemResponse<null>>(`/api/hq/admin/skills/${id}`, {
       method: "DELETE",
-    }),
+    }).then((res) => { invalidatePublicCache("/api/portfolio/skills"); return res; }),
 
   // Experience
   getAllExperience: () =>
@@ -188,18 +253,18 @@ export const adminApi = {
     apiFetch<ApiItemResponse<ExperienceEntry>>("/api/hq/admin/experience", {
       method: "POST",
       body: JSON.stringify(body),
-    }),
+    }).then((res) => { invalidatePublicCache("/api/portfolio/experience"); return res; }),
 
   updateExperience: (id: string, body: ExperienceFormData) =>
     apiFetch<ApiItemResponse<ExperienceEntry>>(`/api/hq/admin/experience/${id}`, {
       method: "PUT",
       body: JSON.stringify(body),
-    }),
+    }).then((res) => { invalidatePublicCache("/api/portfolio/experience"); return res; }),
 
   deleteExperience: (id: string) =>
     apiFetch<ApiItemResponse<null>>(`/api/hq/admin/experience/${id}`, {
       method: "DELETE",
-    }),
+    }).then((res) => { invalidatePublicCache("/api/portfolio/experience"); return res; }),
 
   // Certifications
   getAllCertifications: () =>
@@ -209,38 +274,38 @@ export const adminApi = {
     apiFetch<ApiItemResponse<CertificationEntry>>("/api/hq/admin/certifications", {
       method: "POST",
       body: JSON.stringify(body),
-    }),
+    }).then((res) => { invalidatePublicCache("/api/portfolio/certifications"); return res; }),
 
   updateCertification: (id: string, body: CertificationFormData) =>
     apiFetch<ApiItemResponse<CertificationEntry>>(`/api/hq/admin/certifications/${id}`, {
       method: "PUT",
       body: JSON.stringify(body),
-    }),
+    }).then((res) => { invalidatePublicCache("/api/portfolio/certifications"); return res; }),
 
   deleteCertification: (id: string) =>
     apiFetch<ApiItemResponse<null>>(`/api/hq/admin/certifications/${id}`, {
       method: "DELETE",
-    }),
+    }).then((res) => { invalidatePublicCache("/api/portfolio/certifications"); return res; }),
 };
 
 export const publicApi = {
   getProjects: () =>
-    apiFetch<ApiListResponse<ProjectEntry>>("/api/portfolio/projects", { skipAuth: true }),
+    cachedPublicFetch<ApiListResponse<ProjectEntry>>("/api/portfolio/projects"),
 
   getNotes: () =>
-    apiFetch<ApiListResponse<NoteEntry>>("/api/portfolio/notes", { skipAuth: true }),
+    cachedPublicFetch<ApiListResponse<NoteEntry>>("/api/portfolio/notes"),
 
   getProfile: () =>
-    apiFetch<ApiItemResponse<ProfileEntry>>("/api/portfolio/profile", { skipAuth: true }),
+    cachedPublicFetch<ApiItemResponse<ProfileEntry>>("/api/portfolio/profile"),
 
   getSkills: () =>
-    apiFetch<ApiListResponse<SkillEntry>>("/api/portfolio/skills", { skipAuth: true }),
+    cachedPublicFetch<ApiListResponse<SkillEntry>>("/api/portfolio/skills"),
 
   getExperience: () =>
-    apiFetch<ApiListResponse<ExperienceEntry>>("/api/portfolio/experience", { skipAuth: true }),
+    cachedPublicFetch<ApiListResponse<ExperienceEntry>>("/api/portfolio/experience"),
 
   getCertifications: () =>
-    apiFetch<ApiListResponse<CertificationEntry>>("/api/portfolio/certifications", { skipAuth: true }),
+    cachedPublicFetch<ApiListResponse<CertificationEntry>>("/api/portfolio/certifications"),
 };
 
 // ── Types ─────────────────────────────────────────────────────────────────────

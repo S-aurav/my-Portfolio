@@ -2,6 +2,23 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["192.168.0.100", "192.168.0.100:3000"],
+  images: {
+    remotePatterns: [
+      {
+        // Cloudinary CDN — used when storage.provider=cloudinary
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        pathname: "/**",
+      },
+      {
+        // Local backend uploads — used when storage.provider=local
+        protocol: "http",
+        hostname: "localhost",
+        port: "8080",
+        pathname: "/uploads/**",
+      },
+    ],
+  },
   async rewrites() {
     return [
       {
