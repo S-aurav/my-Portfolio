@@ -23,7 +23,7 @@ export default function Hero() {
 
   return (
     <section id="hero" className="section" style={{ paddingTop: 0 }}>
-      <div ref={ref} className="reveal card" style={{ padding: '40px 40px 36px' }}>
+      <div ref={ref} className="reveal card card-large">
         {/* Greeting line */}
         <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px' }}>
           Hello, World!

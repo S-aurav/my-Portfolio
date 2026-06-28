@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { adminApi, RouteEntry } from "@/lib/api";
 
 type Props = {
@@ -30,6 +30,17 @@ function groupByProject(routes: RouteEntry[]): Record<string, RouteEntry[]> {
 
 export default function RegistryTable({ routes, onToggle, onDelete, onEdit, onDocs }: Props) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const grouped = groupByProject(routes);
 
   async function handleDelete(id: string) {
@@ -94,38 +105,29 @@ export default function RegistryTable({ routes, onToggle, onDelete, onEdit, onDo
             )}
           </div>
 
-          {/* Routes table */}
-          <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ borderBottom: "1px solid var(--border-light)", background: "var(--bg-main)" }}>
-                  {HEADERS.map(h => (
-                    <th key={h} style={{
-                      padding: "10px 16px", textAlign: "left",
-                      fontSize: "0.68rem", fontWeight: 700,
-                      color: "var(--text-muted)", letterSpacing: "0.08em",
-                      textTransform: "uppercase", whiteSpace: "nowrap",
-                    }}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {projectRoutes.map((route, i) => {
-                  const methodStyle = METHOD_COLORS[route.method] ?? { bg: "#f7fafc", color: "#4a5568" };
-                  return (
-                    <tr
-                      key={route.id}
-                      style={{
-                        borderBottom: i < projectRoutes.length - 1 ? "1px solid var(--border-light)" : "none",
-                        opacity: route.enabled ? 1 : 0.55,
-                        transition: "opacity 0.2s",
-                        background: route.stale ? "#fffdf0" : "transparent",
-                      }}
-                    >
-                      {/* Method */}
-                      <td style={{ padding: "12px 16px" }}>
+          {/* Routes table / cards */}
+          {isMobile ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {projectRoutes.map((route) => {
+                const methodStyle = METHOD_COLORS[route.method] ?? { bg: "#f7fafc", color: "#4a5568" };
+                return (
+                  <div
+                    key={route.id}
+                    className="card"
+                    style={{
+                      padding: "16px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 12,
+                      opacity: route.enabled ? 1 : 0.65,
+                      transition: "opacity 0.2s",
+                      background: route.stale ? "var(--bg-main)" : "var(--bg-white)",
+                      border: route.stale ? "1px solid #f6e05e" : "1px solid var(--border-color)",
+                    }}
+                  >
+                    {/* Top Row: Method badge, source tag, and toggle */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <span
                           className={`method-badge method-${route.method}`}
                           style={{
@@ -136,41 +138,6 @@ export default function RegistryTable({ routes, onToggle, onDelete, onEdit, onDo
                         >
                           {route.method}
                         </span>
-                      </td>
-
-                      {/* Path */}
-                      <td style={{ padding: "12px 16px" }}>
-                        <code style={{ fontSize: "0.8rem", color: "var(--text-secondary)", fontFamily: "Inconsolata, monospace" }}>
-                          {route.fullPath}
-                        </code>
-                        {route.description && (
-                          <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 2 }}>
-                            {route.description}
-                          </p>
-                        )}
-                        {route.stale && (
-                          <p style={{ fontSize: "0.68rem", color: "#b7791f", marginTop: 2, fontWeight: 600 }}>
-                            ⚠ No longer found in backend — review & delete if removed
-                          </p>
-                        )}
-                      </td>
-
-                      {/* Module / Op */}
-                      <td style={{ padding: "12px 16px", whiteSpace: "nowrap" }}>
-                        <span className="tag">{route.module}</span>
-                        {" / "}
-                        <span className="tag">{route.operation}</span>
-                      </td>
-
-                      {/* Auth required */}
-                      <td style={{ padding: "12px 16px" }}>
-                        <span style={{ fontSize: "0.75rem", color: route.requiresAuth ? "var(--accent)" : "var(--text-light)" }}>
-                          {route.requiresAuth ? "🔒 Yes" : "—"}
-                        </span>
-                      </td>
-
-                      {/* Source: AUTO vs MANUAL */}
-                      <td style={{ padding: "12px 16px" }}>
                         <span style={{
                           padding: "2px 7px", borderRadius: 3, fontSize: "0.68rem", fontWeight: 700,
                           letterSpacing: "0.06em",
@@ -180,87 +147,270 @@ export default function RegistryTable({ routes, onToggle, onDelete, onEdit, onDo
                         }}>
                           {route.autoRegistered ? "AUTO" : "MANUAL"}
                         </span>
-                      </td>
+                      </div>
 
-                      {/* Toggle */}
-                      <td style={{ padding: "12px 16px" }}>
-                        <button
-                          id={`route-toggle-${route.id}`}
-                          onClick={() => handleToggle(route.id, route.enabled)}
-                          className={`route-status-toggle ${route.enabled ? "enabled" : "disabled"}`}
-                          style={{
-                            padding: "4px 12px", borderRadius: 12,
-                            border: `1px solid ${route.enabled ? "#48bb78" : "#cbd5e0"}`,
-                            background: route.enabled ? "#f0fff4" : "#f7fafc",
-                            color: route.enabled ? "#276749" : "var(--text-muted)",
-                            fontSize: "0.72rem", fontWeight: 700,
-                            fontFamily: "Josefin Sans, sans-serif",
-                            letterSpacing: "0.06em", cursor: "pointer",
-                            transition: "all 0.18s",
-                          }}
-                        >
-                          {route.enabled ? "● ON" : "○ OFF"}
-                        </button>
-                      </td>
+                      <button
+                        id={`route-toggle-mobile-${route.id}`}
+                        onClick={() => handleToggle(route.id, route.enabled)}
+                        className={`route-status-toggle ${route.enabled ? "enabled" : "disabled"}`}
+                        style={{
+                          padding: "4px 12px", borderRadius: 12,
+                          border: `1px solid ${route.enabled ? "#48bb78" : "#cbd5e0"}`,
+                          background: route.enabled ? "#f0fff4" : "#f7fafc",
+                          color: route.enabled ? "#276749" : "var(--text-muted)",
+                          fontSize: "0.72rem", fontWeight: 700,
+                          fontFamily: "Josefin Sans, sans-serif",
+                          letterSpacing: "0.06em", cursor: "pointer",
+                          transition: "all 0.18s",
+                        }}
+                      >
+                        {route.enabled ? "● ON" : "○ OFF"}
+                      </button>
+                    </div>
 
-                      {/* Actions */}
-                      <td style={{ padding: "12px 16px" }}>
-                        <div style={{ display: "flex", gap: 6 }}>
-                          <button
-                            id={`route-docs-${route.id}`}
-                            onClick={() => onDocs(route)}
-                            title="View / edit documentation"
+                    {/* Middle: Path and description */}
+                    <div>
+                      <code style={{ fontSize: "0.82rem", color: "var(--text-secondary)", fontFamily: "Inconsolata, monospace", wordBreak: "break-all" }}>
+                        {route.fullPath}
+                      </code>
+                      {route.description && (
+                        <p style={{ fontSize: "0.74rem", color: "var(--text-muted)", marginTop: 4, marginBottom: 0 }}>
+                          {route.description}
+                        </p>
+                      )}
+                      {route.stale && (
+                        <p style={{ fontSize: "0.7rem", color: "#b7791f", marginTop: 4, fontWeight: 600, marginBottom: 0 }}>
+                          ⚠ No longer found in backend — review & delete if removed
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Module / Op & Auth indicator */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.72rem", borderTop: "1px dashed var(--border-color)", paddingTop: 8 }}>
+                      <span>
+                        <span className="tag" style={{ fontSize: "0.68rem" }}>{route.module}</span>
+                        {" / "}
+                        <span className="tag" style={{ fontSize: "0.68rem" }}>{route.operation}</span>
+                      </span>
+                      <span style={{ color: route.requiresAuth ? "var(--accent)" : "var(--text-light)", fontWeight: 600 }}>
+                        {route.requiresAuth ? "🔒 Private" : "🔓 Public"}
+                      </span>
+                    </div>
+
+                    {/* Actions row */}
+                    <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                      <button
+                        onClick={() => onDocs(route)}
+                        style={{
+                          flex: 1, padding: "8px 10px", border: "1px solid var(--border-color)",
+                          borderRadius: 3, background: "transparent",
+                          fontSize: "0.72rem", color: "var(--text-muted)",
+                          cursor: "pointer", fontFamily: "Josefin Sans, sans-serif",
+                          fontWeight: 600, transition: "all 0.18s",
+                        }}
+                      >
+                        Docs
+                      </button>
+                      <button
+                        onClick={() => onEdit(route)}
+                        style={{
+                          flex: 1, padding: "8px 10px", border: "1px solid var(--border-color)",
+                          borderRadius: 3, background: "transparent",
+                          fontSize: "0.72rem", color: "var(--text-muted)",
+                          cursor: "pointer", fontFamily: "Josefin Sans, sans-serif",
+                          fontWeight: 600, transition: "all 0.18s",
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(route.id)}
+                        disabled={deletingId === route.id}
+                        style={{
+                          flex: 1, padding: "8px 10px", border: "1px solid var(--border-color)",
+                          borderRadius: 3, background: "transparent",
+                          fontSize: "0.72rem", color: "var(--text-muted)",
+                          cursor: "pointer", fontFamily: "Josefin Sans, sans-serif",
+                          fontWeight: 600, transition: "all 0.18s",
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = "#e53e3e"; e.currentTarget.style.color = "#e53e3e"; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border-color)"; e.currentTarget.style.color = "var(--text-muted)"; }}
+                      >
+                        {deletingId === route.id ? "…" : "Delete"}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid var(--border-light)", background: "var(--bg-main)" }}>
+                    {HEADERS.map(h => (
+                      <th key={h} style={{
+                        padding: "10px 16px", textAlign: "left",
+                        fontSize: "0.68rem", fontWeight: 700,
+                        color: "var(--text-muted)", letterSpacing: "0.08em",
+                        textTransform: "uppercase", whiteSpace: "nowrap",
+                      }}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {projectRoutes.map((route, i) => {
+                    const methodStyle = METHOD_COLORS[route.method] ?? { bg: "#f7fafc", color: "#4a5568" };
+                    return (
+                      <tr
+                        key={route.id}
+                        style={{
+                          borderBottom: i < projectRoutes.length - 1 ? "1px solid var(--border-light)" : "none",
+                          opacity: route.enabled ? 1 : 0.55,
+                          transition: "opacity 0.2s",
+                          background: route.stale ? "#fffdf0" : "transparent",
+                        }}
+                      >
+                        {/* Method */}
+                        <td style={{ padding: "12px 16px" }}>
+                          <span
+                            className={`method-badge method-${route.method}`}
                             style={{
-                              padding: "4px 10px", border: "1px solid var(--border-color)",
-                              borderRadius: 3, background: "transparent",
-                              fontSize: "0.72rem", color: "var(--text-muted)",
-                              cursor: "pointer", fontFamily: "Josefin Sans, sans-serif",
-                              fontWeight: 600, transition: "all 0.18s",
+                              padding: "2px 8px", borderRadius: 3,
+                              background: methodStyle.bg, color: methodStyle.color,
+                              fontFamily: "Inconsolata, monospace", fontSize: "0.76rem", fontWeight: 700,
                             }}
-                            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.color = "var(--accent)"; }}
-                            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border-color)"; e.currentTarget.style.color = "var(--text-muted)"; }}
                           >
-                            Docs
-                          </button>
+                            {route.method}
+                          </span>
+                        </td>
+
+                        {/* Path */}
+                        <td style={{ padding: "12px 16px" }}>
+                          <code style={{ fontSize: "0.8rem", color: "var(--text-secondary)", fontFamily: "Inconsolata, monospace" }}>
+                            {route.fullPath}
+                          </code>
+                          {route.description && (
+                            <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 2 }}>
+                              {route.description}
+                            </p>
+                          )}
+                          {route.stale && (
+                            <p style={{ fontSize: "0.68rem", color: "#b7791f", marginTop: 2, fontWeight: 600 }}>
+                              ⚠ No longer found in backend — review & delete if removed
+                            </p>
+                          )}
+                        </td>
+
+                        {/* Module / Op */}
+                        <td style={{ padding: "12px 16px", whiteSpace: "nowrap" }}>
+                          <span className="tag">{route.module}</span>
+                          {" / "}
+                          <span className="tag">{route.operation}</span>
+                        </td>
+
+                        {/* Auth required */}
+                        <td style={{ padding: "12px 16px" }}>
+                          <span style={{ fontSize: "0.75rem", color: route.requiresAuth ? "var(--accent)" : "var(--text-light)" }}>
+                            {route.requiresAuth ? "🔒 Yes" : "—"}
+                          </span>
+                        </td>
+
+                        {/* Source: AUTO vs MANUAL */}
+                        <td style={{ padding: "12px 16px" }}>
+                          <span style={{
+                            padding: "2px 7px", borderRadius: 3, fontSize: "0.68rem", fontWeight: 700,
+                            letterSpacing: "0.06em",
+                            background: route.autoRegistered ? "rgba(74,144,217,0.1)" : "#f0f0f0",
+                            color: route.autoRegistered ? "var(--accent)" : "#718096",
+                            border: `1px solid ${route.autoRegistered ? "rgba(74,144,217,0.25)" : "#e2e8f0"}`,
+                          }}>
+                            {route.autoRegistered ? "AUTO" : "MANUAL"}
+                          </span>
+                        </td>
+
+                        {/* Toggle */}
+                        <td style={{ padding: "12px 16px" }}>
                           <button
-                            id={`route-edit-${route.id}`}
-                            onClick={() => onEdit(route)}
+                            id={`route-toggle-${route.id}`}
+                            onClick={() => handleToggle(route.id, route.enabled)}
+                            className={`route-status-toggle ${route.enabled ? "enabled" : "disabled"}`}
                             style={{
-                              padding: "4px 10px", border: "1px solid var(--border-color)",
-                              borderRadius: 3, background: "transparent",
-                              fontSize: "0.72rem", color: "var(--text-muted)",
-                              cursor: "pointer", fontFamily: "Josefin Sans, sans-serif",
-                              fontWeight: 600, transition: "all 0.18s",
+                              padding: "4px 12px", borderRadius: 12,
+                              border: `1px solid ${route.enabled ? "#48bb78" : "#cbd5e0"}`,
+                              background: route.enabled ? "#f0fff4" : "#f7fafc",
+                              color: route.enabled ? "#276749" : "var(--text-muted)",
+                              fontSize: "0.72rem", fontWeight: 700,
+                              fontFamily: "Josefin Sans, sans-serif",
+                              letterSpacing: "0.06em", cursor: "pointer",
+                              transition: "all 0.18s",
                             }}
-                            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.color = "var(--accent)"; }}
-                            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border-color)"; e.currentTarget.style.color = "var(--text-muted)"; }}
                           >
-                            Edit
+                            {route.enabled ? "● ON" : "○ OFF"}
                           </button>
-                          <button
-                            id={`route-delete-${route.id}`}
-                            onClick={() => handleDelete(route.id)}
-                            disabled={deletingId === route.id}
-                            style={{
-                              padding: "4px 10px", border: "1px solid var(--border-color)",
-                              borderRadius: 3, background: "transparent",
-                              fontSize: "0.72rem", color: "var(--text-muted)",
-                              cursor: "pointer", fontFamily: "Josefin Sans, sans-serif",
-                              fontWeight: 600, transition: "all 0.18s",
-                            }}
-                            onMouseEnter={e => { e.currentTarget.style.borderColor = "#e53e3e"; e.currentTarget.style.color = "#e53e3e"; }}
-                            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border-color)"; e.currentTarget.style.color = "var(--text-muted)"; }}
-                          >
-                            {deletingId === route.id ? "…" : "Delete"}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        </td>
+
+                        {/* Actions */}
+                        <td style={{ padding: "12px 16px" }}>
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <button
+                              id={`route-docs-${route.id}`}
+                              onClick={() => onDocs(route)}
+                              title="View / edit documentation"
+                              style={{
+                                padding: "4px 10px", border: "1px solid var(--border-color)",
+                                borderRadius: 3, background: "transparent",
+                                fontSize: "0.72rem", color: "var(--text-muted)",
+                                cursor: "pointer", fontFamily: "Josefin Sans, sans-serif",
+                                fontWeight: 600, transition: "all 0.18s",
+                              }}
+                              onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.color = "var(--accent)"; }}
+                              onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border-color)"; e.currentTarget.style.color = "var(--text-muted)"; }}
+                            >
+                              Docs
+                            </button>
+                            <button
+                              id={`route-edit-${route.id}`}
+                              onClick={() => onEdit(route)}
+                              style={{
+                                padding: "4px 10px", border: "1px solid var(--border-color)",
+                                borderRadius: 3, background: "transparent",
+                                fontSize: "0.72rem", color: "var(--text-muted)",
+                                cursor: "pointer", fontFamily: "Josefin Sans, sans-serif",
+                                fontWeight: 600, transition: "all 0.18s",
+                              }}
+                              onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.color = "var(--accent)"; }}
+                              onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border-color)"; e.currentTarget.style.color = "var(--text-muted)"; }}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              id={`route-delete-${route.id}`}
+                              onClick={() => handleDelete(route.id)}
+                              disabled={deletingId === route.id}
+                              style={{
+                                padding: "4px 10px", border: "1px solid var(--border-color)",
+                                borderRadius: 3, background: "transparent",
+                                fontSize: "0.72rem", color: "var(--text-muted)",
+                                cursor: "pointer", fontFamily: "Josefin Sans, sans-serif",
+                                fontWeight: 600, transition: "all 0.18s",
+                              }}
+                              onMouseEnter={e => { e.currentTarget.style.borderColor = "#e53e3e"; e.currentTarget.style.color = "#e53e3e"; }}
+                              onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border-color)"; e.currentTarget.style.color = "var(--text-muted)"; }}
+                            >
+                              {deletingId === route.id ? "…" : "Delete"}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       ))}
     </div>

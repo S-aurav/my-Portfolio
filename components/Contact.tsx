@@ -12,7 +12,7 @@ export default function Contact() {
         <h2 className="section-title">Contact</h2>
         <p className="section-subtitle">Let's get in touch</p>
 
-        <div className="card" style={{ position: 'relative', overflow: 'hidden', padding: '40px 28px' }}>
+        <div className="card card-large" style={{ position: 'relative', overflow: 'hidden' }}>
           {/* Background branches.webp image */}
           <img 
             src="/branches.webp" 

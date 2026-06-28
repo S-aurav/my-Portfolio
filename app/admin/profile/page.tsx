@@ -48,12 +48,41 @@ export default function AdminProfile() {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 992);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Auto-dismiss error notification after 5 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(""), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
+  // Auto-dismiss success notification after 5 seconds
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setSuccess(""), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
 
   useEffect(() => {
     adminApi.getProfile()
       .then(res => {
         if (res.data) {
-          setForm({ ...res.data });
+          setForm({
+            ...res.data,
+            profileImage: res.data.profileImage || personalInfo.profileImage,
+          });
           if (res.data.sectionOrder) {
             setSections(res.data.sectionOrder.split(",").map(s => s.trim()));
           }
@@ -90,6 +119,13 @@ export default function AdminProfile() {
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      setError("Max upload size reached (2MB limit). Please compress the image.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
     setUploading(true);
     setError("");
     try {
@@ -99,6 +135,7 @@ export default function AdminProfile() {
       setError(err.message || "Upload failed");
     } finally {
       setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
 
@@ -130,7 +167,11 @@ export default function AdminProfile() {
       </div>
 
       <form onSubmit={handleSave}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+          gap: isMobile ? 16 : 24
+        }}>
           {/* Left col */}
           <div className="card" style={{ padding: "28px 28px 20px" }}>
             <h2 style={{ fontFamily: "Montserrat, sans-serif", fontSize: "0.9rem", fontWeight: 700, marginBottom: 20, color: "var(--text-primary)" }}>Personal Info</h2>
@@ -150,7 +191,7 @@ export default function AdminProfile() {
               <h2 style={{ fontFamily: "Montserrat, sans-serif", fontSize: "0.9rem", fontWeight: 700, marginBottom: 20, color: "var(--text-primary)" }}>Profile Image</h2>
 
               {form.profileImage && (
-                <div style={{ marginBottom: 16, width: 100, height: 100, borderRadius: "50%", overflow: "hidden", border: "2px solid var(--border-color)" }}>
+                <div style={{ margin: "0 auto 16px", width: 100, height: 100, borderRadius: "50%", overflow: "hidden", border: "2px solid var(--border-color)" }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={form.profileImage} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 </div>
@@ -224,16 +265,58 @@ export default function AdminProfile() {
           </div>
         </div>
 
-        {/* Feedback */}
-        {error && <p style={{ marginTop: 16, fontSize: "0.82rem", color: "#e53e3e", background: "#fff5f5", border: "1px solid #fed7d7", padding: "8px 12px" }}>{error}</p>}
-        {success && <p style={{ marginTop: 16, fontSize: "0.82rem", color: "#276749", background: "#f0fff4", border: "1px solid #9ae6b4", padding: "8px 12px" }}>{success}</p>}
+        {/* Floating Feedback Notifications */}
+        <div style={{ position: "fixed", top: "24px", right: "24px", zIndex: 1100, display: "flex", flexDirection: "column", gap: 10, maxWidth: "320px", width: "calc(100% - 48px)" }}>
+          {error && (
+            <div style={{ padding: "12px 16px", background: "var(--bg-white)", border: "1px solid var(--border-color)", borderLeft: "4px solid #e53e3e", boxShadow: "var(--shadow-md)", display: "flex", justifyContent: "space-between", alignItems: "flex-start", animation: "fadeIn 0.2s ease-out" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2, textAlign: "left" }}>
+                <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "#e53e3e", letterSpacing: "0.05em", textTransform: "uppercase" }}>Error</span>
+                <span style={{ fontSize: "0.8rem", color: "var(--text-primary)", lineHeight: 1.4 }}>{error}</span>
+              </div>
+              <button type="button" onClick={() => setError("")} style={{ background: "transparent", border: "none", color: "var(--text-light)", fontSize: "1.15rem", cursor: "pointer", padding: "0 0 0 8px", lineHeight: 1 }}>×</button>
+            </div>
+          )}
+          {success && (
+            <div style={{ padding: "12px 16px", background: "var(--bg-white)", border: "1px solid var(--border-color)", borderLeft: "4px solid #276749", boxShadow: "var(--shadow-md)", display: "flex", justifyContent: "space-between", alignItems: "flex-start", animation: "fadeIn 0.2s ease-out" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2, textAlign: "left" }}>
+                <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "#276749", letterSpacing: "0.05em", textTransform: "uppercase" }}>Success</span>
+                <span style={{ fontSize: "0.8rem", color: "var(--text-primary)", lineHeight: 1.4 }}>{success}</span>
+              </div>
+              <button type="button" onClick={() => setSuccess("")} style={{ background: "transparent", border: "none", color: "var(--text-light)", fontSize: "1.15rem", cursor: "pointer", padding: "0 0 0 8px", lineHeight: 1 }}>×</button>
+            </div>
+          )}
+        </div>
 
         {/* Save */}
-        <div style={{ marginTop: 24, display: "flex", justifyContent: "flex-end" }}>
+        <div style={isMobile ? {
+          position: "fixed",
+          bottom: "24px",
+          right: "24px",
+          zIndex: 800,
+          marginTop: 0
+        } : {
+          marginTop: 24,
+          display: "flex",
+          justifyContent: "flex-end"
+        }}>
           <button
             type="submit"
             disabled={saving}
-            style={{ padding: "10px 32px", background: "var(--accent)", color: "#fff", border: "none", fontFamily: "Josefin Sans, sans-serif", fontSize: "0.82rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1, borderRadius: 0 }}
+            style={{
+              padding: isMobile ? "12px 24px" : "10px 32px",
+              background: "var(--accent)",
+              color: "#fff",
+              border: "none",
+              fontFamily: "Josefin Sans, sans-serif",
+              fontSize: "0.82rem",
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              cursor: saving ? "not-allowed" : "pointer",
+              opacity: saving ? 0.7 : 1,
+              borderRadius: isMobile ? "24px" : 0,
+              boxShadow: isMobile ? "0 4px 16px rgba(74, 144, 217, 0.45)" : "none"
+            }}
           >
             {saving ? "Saving…" : "Save Profile"}
           </button>

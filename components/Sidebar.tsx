@@ -80,14 +80,94 @@ export default function Sidebar() {
   const name         = profile?.name        ?? personalInfo.name;
   const role         = profile?.role        ?? personalInfo.role;
   const location     = profile?.location    ?? personalInfo.location;
-  const profileImage = profile?.profileImage ?? personalInfo.profileImage;
+  const profileImage = profile?.profileImage || personalInfo.profileImage;
   const github       = profile?.githubUrl   ?? personalInfo.links.github;
   const linkedin     = profile?.linkedinUrl ?? personalInfo.links.linkedin;
   const leetcode     = profile?.leetcodeUrl ?? personalInfo.links.leetcode;
   const email        = profile?.email       ?? personalInfo.email;
 
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  // Swipe gesture listeners to open/close sidebar on mobile
+  useEffect(() => {
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+
+      const diffX = touchEndX - touchStartX;
+      const diffY = touchEndY - touchStartY;
+
+      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+        if (diffX > 0 && touchStartX <= 40) {
+          setIsOpen(true);
+        } else if (diffX < 0 && isOpen) {
+          setIsOpen(false);
+        }
+      }
+    };
+
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [isOpen]);
+
+  const handleLinkClick = () => {
+    setIsOpen(false);
+  };
+
   return (
-    <aside className="sidebar">
+    <>
+      {/* Mobile Toggle Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="sidebar-toggle-btn"
+        aria-label="Toggle Sidebar"
+      >
+        {isOpen ? (
+          <svg style={{ width: 20, height: 20 }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        ) : (
+          <svg style={{ width: 20, height: 20 }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        )}
+      </button>
+
+      {/* Mobile Backdrop */}
+      {isOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setIsOpen(false)}
+          onTouchMove={() => setIsOpen(false)}
+          onWheel={() => setIsOpen(false)}
+        />
+      )}
+
+    <aside className={`sidebar ${isOpen ? "open" : ""}`} style={{ paddingBottom: '56px' }}>
       {/* Avatar */}
       <div className="sidebar-avatar">
         <Image
@@ -97,7 +177,7 @@ export default function Sidebar() {
           height={100}
           className="object-cover w-full h-full"
           priority
-          unoptimized={profileImage.startsWith("http")}
+          unoptimized={true}
         />
       </div>
 
@@ -114,6 +194,7 @@ export default function Sidebar() {
             <a
               href={link.href}
               className={`sidebar-nav-link ${active === link.href.split("#")[1] ? "active" : ""}`}
+              onClick={handleLinkClick}
             >
               {link.label}
             </a>
@@ -124,7 +205,7 @@ export default function Sidebar() {
       <div className="sidebar-divider" />
 
       {/* Social links */}
-      <div className="sidebar-social" style={{ position: 'relative', zIndex: 2 }}>
+      <div className="sidebar-social" style={{ display: 'flex', justifyContent: 'center', gap: '14px', width: '100%' }}>
         {/* GitHub */}
         <a href={github} target="_blank" rel="noopener noreferrer" aria-label="GitHub" title="GitHub">
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -169,7 +250,7 @@ export default function Sidebar() {
       </button>
 
       {/* Footer note */}
-      <p className="text-center mt-6" style={{ fontSize: '0.7rem', color: 'var(--text-light)', letterSpacing: '0.04em', position: 'relative', zIndex: 2 }}>
+      <p className="text-center" style={{ position: 'absolute', bottom: '16px', left: 0, right: 0, fontSize: '0.7rem', color: 'var(--text-light)', letterSpacing: '0.04em', zIndex: 2, margin: 0 }}>
         © {new Date().getFullYear()} {name.split(" ")[0]}
       </p>
 
@@ -181,9 +262,10 @@ export default function Sidebar() {
         <img
           src="/river.gif"
           alt=""
-          style={{ width: '100%', height: 'auto', maxHeight: '100%', objectFit: 'contain', objectPosition: 'left bottom', opacity: 0.45, maskImage: 'radial-gradient(ellipse at bottom left, black 20%, transparent 75%)', WebkitMaskImage: 'radial-gradient(ellipse at bottom left, black 20%, transparent 75%)' }}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'left bottom', opacity: 0.45, maskImage: 'radial-gradient(ellipse at bottom left, black 20%, transparent 70%)', WebkitMaskImage: 'radial-gradient(ellipse at bottom left, black 20%, transparent 70%)' }}
         />
       </div>
     </aside>
+  </>
   );
 }

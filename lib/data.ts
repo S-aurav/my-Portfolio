@@ -4,9 +4,9 @@ export const personalInfo = {
   tagline: "Building systems that scale. One clean commit at a time.",
   bio: "Full-stack software engineer with a passion for building robust backend systems, clean APIs, and scalable architectures. Currently crafting enterprise-grade solutions at Dista.ai — from geospatial data pipelines to RBAC-driven user systems. I love turning complex problems into elegant, maintainable code.",
   email: "yadavsaurav818@gmail.com",
-  phone: "+91 9022894248",
+  phone: "+91 1234567890",
   location: "Pune, India",
-  profileImage: "/profile.png",
+  profileImage: "/profile.png?v=2",
   links: {
     github: "https://github.com/S-aurav",
     linkedin: "https://linkedin.com/in/sauravyadav2004/",
@@ -31,8 +31,6 @@ export const skills: SkillCategory[] = [
       { name: "Java" },
       { name: "Python" },
       { name: "C/C++" },
-      { name: "TypeScript" },
-      { name: "SQL" },
     ],
   },
   {
@@ -41,8 +39,6 @@ export const skills: SkillCategory[] = [
       { name: "Spring Boot" },
       { name: "FastAPI" },
       { name: "Node.js" },
-      { name: "Express" },
-      { name: "REST APIs" },
     ],
   },
   {
@@ -50,8 +46,7 @@ export const skills: SkillCategory[] = [
     skills: [
       { name: "PostgreSQL" },
       { name: "MySQL" },
-      { name: "MongoDB" },
-      { name: "BigQuery" },
+      { name: "MongoDB" }
     ],
   },
   {
@@ -60,9 +55,7 @@ export const skills: SkillCategory[] = [
       { name: "Google Cloud (GCP)" },
       { name: "AWS EC2" },
       { name: "Git & GitHub" },
-      { name: "Podman" },
-      { name: "Postman" },
-      { name: "Linux / Unix" },
+      { name: "Linux / Unix" }
     ],
   },
   {
@@ -70,8 +63,7 @@ export const skills: SkillCategory[] = [
     skills: [
       { name: "React" },
       { name: "Next.js" },
-      { name: "HTML & CSS" },
-      { name: "Tailwind CSS" },
+      { name: "HTML & CSS" }
     ],
   },
 ];
@@ -134,9 +126,9 @@ export const projects: Project[] = [
     title: "Telegram Media Server",
     date: "August 2025",
     description:
-      "An automated system to fetch, process, and categorize video content from Telegram channels. Features cross-platform video streaming, real-time note editing, and background download queue processing.",
-    techStack: ["Python", "FastAPI", "Telethon", "PixelDrain", "GitHub Gist"],
-    github: "https://github.com/S-aurav",
+      "An automated system to fetch, process, and categorize video content from Telegram channels. Features cross-platform video streaming, and background download queue processing.",
+    techStack: ["Python", "FastAPI", "Telethon", "GitHub Gist"],
+    github: "https://github.com/S-aurav/TizenMediaServer",
     demo: undefined,
   },
   {
@@ -145,7 +137,7 @@ export const projects: Project[] = [
     description:
       "Automated forensic tool for analyzing social media chat screenshots and detecting suspicious behavior (harassment, cyberbullying, fraud). Fine-tuned Facebook's BART MNLI model for 50+ domain-specific sentiment labels using zero-shot learning.",
     techStack: ["Python", "HuggingFace Transformers", "BART-MNLI", "EasyOCR"],
-    github: "https://github.com/S-aurav",
+    github: "https://github.com/S-aurav/Automated-Scraping-Tool",
     demo: undefined,
   },
 ];

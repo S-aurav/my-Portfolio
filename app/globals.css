@@ -190,6 +190,12 @@ body {
   padding: 48px 24px 32px;
   z-index: 100;
   overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.sidebar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 /* Main content */
@@ -201,8 +207,9 @@ body {
 }
 
 /* ============================================
-   SIDEBAR COMPONENTS
-   ============================================ */
+    SIDEBAR COMPONENTS
+    ============================================ */
+/* sidebar-bg-gif-img removed */
 .sidebar-avatar {
   width: 100px;
   height: 100px;
@@ -337,6 +344,10 @@ body {
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
+.card-large {
+  padding: 40px 40px 36px;
+}
+
 .card:hover {
   box-shadow: var(--shadow-md);
   border-color: #d8dde2;
@@ -452,36 +463,7 @@ a.link-accent:hover {
 /* ============================================
    RESPONSIVE
    ============================================ */
-@media (max-width: 768px) {
-  .sidebar {
-    position: relative;
-    width: 100%;
-    min-height: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--border-color);
-    padding: 32px 24px;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 16px;
-  }
-
-  .main-content {
-    margin-left: 0;
-    max-width: 100%;
-    padding: 32px 20px;
-  }
-
-  .site-container {
-    flex-direction: column;
-  }
-
-  .sidebar-bg-gif,
-  .page-bg-gif,
-  .contact-bg-image {
-    display: none !important;
-  }
-}
+/* Mobile overrides removed */
 
 /* ============================================
    SELECTION
@@ -749,6 +731,149 @@ a.link-accent:hover {
     width: 100%;
     max-width: 100%;
   }
+}
+
+/* ============================================
+   RESPONSIVE LAYOUT & SIDEBAR TOGGLE
+   ============================================ */
+.sidebar-toggle-btn {
+  display: none;
+}
+
+@media (max-width: 992px) {
+  .site-container {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    height: 100vh;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: none;
+    z-index: 950;
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+  }
+  
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 900;
+    animation: fadeIn 0.2s ease-out;
+  }
+  
+  .sidebar-toggle-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    width: 40px;
+    height: 40px;
+    background: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    z-index: 1000;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s;
+  }
+  
+  .sidebar-toggle-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+    max-width: 100% !important;
+    padding: 80px 20px 48px !important;
+  }
+
+  .card {
+    padding: 20px 16px !important;
+  }
+
+  .card-large {
+    padding: 20px 16px !important;
+  }
+
+  .about-card {
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+
+  .about-avatar-wrapper {
+    margin-bottom: 8px !important;
+  }
+
+  .sidebar-bg-gif {
+    display: none !important;
+  }
+
+  .contact-bg-image {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    opacity: 0.75 !important;
+    margin: 0 auto 20px !important;
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+  }
+
+  /* Notes responsive styles */
+  .notes-detail-layout {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .note-article {
+    padding: 24px 16px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .note-title {
+    font-size: 1.45rem !important;
+  }
+
+  .markdown-preview {
+    font-size: 0.9rem !important;
+  }
+
+  .notes-list-sidebar {
+    width: 100% !important;
+    max-height: none !important;
+    position: static !important;
+    padding: 20px 16px !important;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Scrollbar overrides for sidebar content wrapper */
+.sidebar-content-wrapper {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+.sidebar-content-wrapper::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 

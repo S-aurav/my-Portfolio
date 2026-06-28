@@ -39,6 +39,15 @@ export default function AdminNotes() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   useEffect(() => {
     fetchNotes();
   }, []);
@@ -62,7 +71,7 @@ export default function AdminNotes() {
     setCategory("");
     setVisibility("PUBLIC");
     setError("");
-    setPreviewMode("split");
+    setPreviewMode(isMobile ? "edit" : "split");
     setModalOpen(true);
   }
 
@@ -73,7 +82,7 @@ export default function AdminNotes() {
     setCategory(note.category);
     setVisibility(note.visibility);
     setError("");
-    setPreviewMode("split");
+    setPreviewMode(isMobile ? "edit" : "split");
     setModalOpen(true);
   }
 
@@ -130,6 +139,12 @@ export default function AdminNotes() {
   };
 
   const handleFileUpload = async (file: File) => {
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Max upload size reached (2MB limit). Please compress the media.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
     setUploading(true);
     try {
       const res = await adminApi.uploadFile(file);
@@ -305,9 +320,9 @@ export default function AdminNotes() {
               <h2 style={{ fontFamily: "Montserrat, sans-serif", fontSize: "1.2rem", fontWeight: 700, color: "var(--text-primary)" }}>
                 {editingNote ? "Edit Note" : "Write Note"}
               </h2>
-              {/* Preview Mode Selector */}
+              {/* Preview Mode Selector — Edit/Preview only on mobile; Split available on desktop */}
               <div style={{ display: "flex", gap: 4, background: "var(--border-color)", padding: 2, borderRadius: 4 }}>
-                {(["edit", "preview", "split"] as const).map(mode => (
+                {(["edit", "preview", ...(isMobile ? [] : ["split"])] as ("edit" | "preview" | "split")[]).map(mode => (
                   <button
                     key={mode}
                     type="button"
@@ -326,7 +341,7 @@ export default function AdminNotes() {
             </div>
 
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12, flex: 1, overflow: "hidden" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "2fr 1fr 1fr", gap: isMobile ? 8 : 12 }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: 4, textTransform: "uppercase" }}>
                     Title

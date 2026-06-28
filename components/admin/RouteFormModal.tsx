@@ -25,6 +25,16 @@ export default function RouteFormModal({ route, onSave, onClose }: Props) {
   const [form, setForm] = useState<RouteFormData>(EMPTY_FORM);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const isEdit = !!route;
 
@@ -73,7 +83,7 @@ export default function RouteFormModal({ route, onSave, onClose }: Props) {
     width: "100%", padding: "8px 10px",
     border: "1px solid var(--border-color)", borderRadius: 4,
     fontSize: "0.85rem", color: "var(--text-primary)",
-    background: "#fff", outline: "none", fontFamily: "Inconsolata, monospace",
+    background: "var(--bg-white)", outline: "none", fontFamily: "Inconsolata, monospace",
     transition: "border-color 0.18s",
   };
 
@@ -87,9 +97,17 @@ export default function RouteFormModal({ route, onSave, onClose }: Props) {
     <div style={{
       position: "fixed", inset: 0, zIndex: 1000,
       background: "rgba(0,0,0,0.35)", display: "flex",
-      alignItems: "center", justifyContent: "center", padding: 24,
+      alignItems: isMobile ? "flex-end" : "center",
+      justifyContent: "center", padding: isMobile ? 0 : 24,
     }} onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="card" style={{ width: "100%", maxWidth: 560, padding: "32px 32px", maxHeight: "90vh", overflowY: "auto" }}>
+      <div className="card" style={{
+        width: "100%",
+        maxWidth: isMobile ? "100%" : 560,
+        padding: isMobile ? "24px 16px" : "32px 32px",
+        maxHeight: isMobile ? "85vh" : "90vh",
+        overflowY: "auto",
+        borderRadius: isMobile ? "16px 16px 0 0" : 0
+      }}>
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
           <h2 style={{ fontFamily: "Montserrat, sans-serif", fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary)" }}>
@@ -113,7 +131,7 @@ export default function RouteFormModal({ route, onSave, onClose }: Props) {
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {/* Row 1: project / module / operation */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 12 }}>
             <div>
               <label style={labelStyle}>Project</label>
               <input style={inputStyle} value={form.project} onChange={e => set("project", e.target.value)} placeholder="hq" required />
@@ -131,11 +149,11 @@ export default function RouteFormModal({ route, onSave, onClose }: Props) {
           {/* Full path (auto-generated, editable) */}
           <div>
             <label style={labelStyle}>Full Path (auto-generated)</label>
-            <input style={{ ...inputStyle, background: "#f7fafc" }} value={form.fullPath} onChange={e => set("fullPath", e.target.value)} placeholder="/api/hq/notes/create" required />
+            <input style={{ ...inputStyle, background: "var(--bg-main)" }} value={form.fullPath} onChange={e => set("fullPath", e.target.value)} placeholder="/api/hq/notes/create" required />
           </div>
 
           {/* Row 2: method */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
             <div>
               <label style={labelStyle}>HTTP Method</label>
               <select style={{ ...inputStyle, cursor: "pointer" }} value={form.method} onChange={e => set("method", e.target.value)}>

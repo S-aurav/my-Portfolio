@@ -24,7 +24,7 @@ export default function About() {
   const bio          = profile?.bio         ?? personalInfo.bio;
   const location     = profile?.location    ?? personalInfo.location;
   const email        = profile?.email       ?? personalInfo.email;
-  const profileImage = profile?.profileImage ?? personalInfo.profileImage;
+  const profileImage = profile?.profileImage || personalInfo.profileImage;
   const certList     = certs ?? staticCerts.map((c, i) => ({ id: String(i), name: c, displayOrder: i, createdAt: '', updatedAt: '' }));
 
   return (
@@ -33,9 +33,9 @@ export default function About() {
         <h2 className="section-title">About</h2>
         <p className="section-subtitle">A little about me</p>
 
-        <div className="card" style={{ display: 'flex', gap: '32px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+        <div className="card about-card" style={{ display: 'flex', gap: '32px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
           {/* Avatar */}
-          <div style={{ flexShrink: 0 }}>
+          <div className="about-avatar-wrapper" style={{ flexShrink: 0 }}>
             <div style={{ width: 120, height: 120, overflow: 'hidden', border: '1px solid var(--border-color)' }}>
               <Image
                 src={profileImage}
@@ -44,7 +44,7 @@ export default function About() {
                 height={120}
                 className="object-cover"
                 sizes="120px"
-                unoptimized={profileImage.startsWith("http")}
+                unoptimized={true}
               />
             </div>
           </div>

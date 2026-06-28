@@ -74,11 +74,58 @@ const navLinks = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     const active = document.documentElement.getAttribute("data-theme") as "light" | "dark" || "light";
     setTheme(active);
   }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  // Swipe gesture listeners to open/close sidebar on mobile
+  useEffect(() => {
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+
+      const diffX = touchEndX - touchStartX;
+      const diffY = touchEndY - touchStartY;
+
+      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+        if (diffX > 0 && touchStartX <= 40) {
+          setIsOpen(true);
+        } else if (diffX < 0 && isOpen) {
+          setIsOpen(false);
+        }
+      }
+    };
+
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [isOpen]);
 
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";
@@ -87,13 +134,44 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setTheme(next);
   };
 
+  const handleLinkClick = () => {
+    setIsOpen(false);
+  };
+
   return (
     <div className="site-container">
+      {/* Mobile Toggle Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="sidebar-toggle-btn"
+        aria-label="Toggle Sidebar"
+      >
+        {isOpen ? (
+          <svg style={{ width: 20, height: 20 }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        ) : (
+          <svg style={{ width: 20, height: 20 }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        )}
+      </button>
+
+      {/* Mobile Backdrop */}
+      {isOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setIsOpen(false)}
+          onTouchMove={() => setIsOpen(false)}
+          onWheel={() => setIsOpen(false)}
+        />
+      )}
+
       {/* Admin Sidebar */}
-      <aside className="sidebar" style={{ paddingTop: 32 }}>
+      <aside className={`sidebar ${isOpen ? "open" : ""}`} style={{ paddingTop: 32 }}>
         {/* Brand */}
         <div style={{ width: "100%", marginBottom: 32 }}>
-          <Link href="/" style={{ textDecoration: "none" }}>
+          <Link href="/" onClick={handleLinkClick} style={{ textDecoration: "none" }}>
             <p style={{ fontFamily: "Montserrat, sans-serif", fontSize: "0.72rem", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 4 }}>
               ← Back to site
             </p>
@@ -116,6 +194,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <li key={link.href}>
                 <Link
                   href={link.href}
+                  onClick={handleLinkClick}
                   style={{
                     display: "flex", alignItems: "center", gap: 10,
                     padding: "9px 12px", borderRadius: 4,
