@@ -42,7 +42,9 @@ export default function AdminExperience() {
     setLoading(true);
     try {
       const res = await adminApi.getAllExperience();
-      setItems(res.data || []);
+      // Sort experience entries by displayOrder ascending
+      const sorted = (res.data || []).sort((a, b) => a.displayOrder - b.displayOrder);
+      setItems(sorted);
     } catch (e: any) { setError(e.message); }
     finally { setLoading(false); }
   }
@@ -91,6 +93,45 @@ export default function AdminExperience() {
     catch (e: any) { setError(e.message); }
   }
 
+  async function handleMoveExperience(item: ExperienceEntry, direction: "up" | "down") {
+    const index = items.findIndex(x => x.id === item.id);
+    if (index === -1) return;
+
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= items.length) return;
+
+    const targetItem = items[newIndex];
+
+    const newOrder = [...items];
+    newOrder[index] = targetItem;
+    newOrder[newIndex] = item;
+
+    setSaving(true);
+    try {
+      // Re-assign displayOrder values as sequential indices
+      for (let i = 0; i < newOrder.length; i++) {
+        const x = newOrder[i];
+        if (x.displayOrder !== i) {
+          await adminApi.updateExperience(x.id, {
+            role: x.role,
+            company: x.company,
+            duration: x.duration,
+            type: x.type,
+            location: x.location,
+            displayOrder: i,
+            highlights: x.highlights,
+            techStack: x.techStack
+          });
+        }
+      }
+      await fetchExperience();
+    } catch (e: any) {
+      alert("Failed to swap order: " + e.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   const typeColors: Record<string, string> = { work: "var(--accent)", education: "#805ad5" };
 
   return (
@@ -115,26 +156,47 @@ export default function AdminExperience() {
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {items.map(item => {
+          {items.map((item, index) => {
             const highlights = safeParseArray(item.highlights);
             const tech = safeParseArray(item.techStack);
             return (
               <div key={item.id} className="card" style={{ padding: "16px 20px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                      <span style={{ fontFamily: "Montserrat, sans-serif", fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)" }}>{item.role}</span>
-                      <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "1px 7px", border: `1px solid ${typeColors[item.type] ?? "var(--border-color)"}`, color: typeColors[item.type] ?? "var(--text-muted)", letterSpacing: "0.06em", textTransform: "uppercase" }}>{item.type}</span>
-                    </div>
-                    <p style={{ fontSize: "0.85rem", color: "var(--accent)", fontWeight: 600, marginBottom: 2 }}>{item.company}</p>
-                    <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontFamily: "Inconsolata, monospace" }}>{item.duration} · {item.location}</p>
-                    {highlights.length > 0 && (
-                      <p style={{ fontSize: "0.78rem", color: "var(--text-light)", marginTop: 6 }}>{highlights.length} highlight{highlights.length !== 1 ? "s" : ""}{tech.length > 0 ? ` · ${tech.join(", ")}` : ""}</p>
-                    )}
+                <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                  {/* Re-order arrows */}
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                    <button
+                      type="button"
+                      onClick={() => handleMoveExperience(item, "up")}
+                      disabled={index === 0 || saving}
+                      style={{ background: "none", border: "none", cursor: index === 0 ? "not-allowed" : "pointer", color: index === 0 ? "var(--text-light-gray, #ccc)" : "var(--accent)", fontSize: "0.85rem", padding: 4, lineHeight: 1 }}
+                      title="Move Up"
+                    >▲</button>
+                    <button
+                      type="button"
+                      onClick={() => handleMoveExperience(item, "down")}
+                      disabled={index === items.length - 1 || saving}
+                      style={{ background: "none", border: "none", cursor: index === items.length - 1 ? "not-allowed" : "pointer", color: index === items.length - 1 ? "var(--text-light-gray, #ccc)" : "var(--accent)", fontSize: "0.85rem", padding: 4, lineHeight: 1 }}
+                      title="Move Down"
+                    >▼</button>
                   </div>
-                  <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                    <button onClick={() => openEdit(item)} style={{ padding: "5px 12px", border: "1px solid var(--border-color)", background: "transparent", cursor: "pointer", fontSize: "0.75rem", fontFamily: "Josefin Sans, sans-serif", fontWeight: 600, borderRadius: 0 }}>Edit</button>
-                    <button onClick={() => handleDelete(item.id)} style={{ padding: "5px 12px", border: "1px solid #fed7d7", background: "#fff5f5", color: "#e53e3e", cursor: "pointer", fontSize: "0.75rem", fontFamily: "Josefin Sans, sans-serif", fontWeight: 600, borderRadius: 0 }}>Delete</button>
+
+                  {/* Main Details */}
+                  <div style={{ flex: 1, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                        <span style={{ fontFamily: "Montserrat, sans-serif", fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)" }}>{item.role}</span>
+                        <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "1px 7px", border: `1px solid ${typeColors[item.type] ?? "var(--border-color)"}`, color: typeColors[item.type] ?? "var(--text-muted)", letterSpacing: "0.06em", textTransform: "uppercase" }}>{item.type}</span>
+                      </div>
+                      <p style={{ fontSize: "0.85rem", color: "var(--accent)", fontWeight: 600, marginBottom: 2 }}>{item.company}</p>
+                      <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontFamily: "Inconsolata, monospace" }}>{item.duration} · {item.location}</p>
+                      {highlights.length > 0 && (
+                        <p style={{ fontSize: "0.78rem", color: "var(--text-light)", marginTop: 6 }}>{highlights.length} highlight{highlights.length !== 1 ? "s" : ""}{tech.length > 0 ? ` · ${tech.join(", ")}` : ""}</p>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                      <button onClick={() => openEdit(item)} style={{ padding: "5px 12px", border: "1px solid var(--border-color)", background: "transparent", cursor: "pointer", fontSize: "0.75rem", fontFamily: "Josefin Sans, sans-serif", fontWeight: 600, borderRadius: 0 }}>Edit</button>
+                      <button onClick={() => handleDelete(item.id)} style={{ padding: "5px 12px", border: "1px solid #fed7d7", background: "#fff5f5", color: "#e53e3e", cursor: "pointer", fontSize: "0.75rem", fontFamily: "Josefin Sans, sans-serif", fontWeight: 600, borderRadius: 0 }}>Delete</button>
+                    </div>
                   </div>
                 </div>
               </div>

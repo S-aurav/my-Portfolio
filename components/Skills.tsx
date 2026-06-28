@@ -16,30 +16,37 @@ function groupSkills(skills: SkillEntry[]): GroupedSkills {
   return Array.from(map.entries()).map(([category, skills]) => ({ category, skills }));
 }
 
-export default function Skills({ initialSkills }: { initialSkills?: SkillEntry[] }) {
+export default function Skills({ initialSkills }: { initialSkills?: SkillEntry[] | null }) {
   const ref = useScrollReveal();
 
-  useEffect(() => {
-    if (initialSkills && initialSkills.length > 0) {
-      localStorage.setItem("cached_skills", JSON.stringify(initialSkills));
-    }
-  }, [initialSkills]);
+  const [grouped, setGrouped] = useState<GroupedSkills>(initialSkills && initialSkills.length > 0 ? groupSkills(initialSkills) : []);
 
-  const [grouped, setGrouped] = useState<GroupedSkills>(() => {
-    if (initialSkills && initialSkills.length > 0) {
-      return groupSkills(initialSkills);
-    }
-    if (typeof window !== "undefined") {
+  useEffect(() => {
+    if (initialSkills !== undefined && initialSkills !== null) {
+      // Server is online. Cache the response (even if empty)
+      localStorage.setItem("cached_skills", JSON.stringify(initialSkills));
+      if (initialSkills.length > 0) {
+        setGrouped(groupSkills(initialSkills));
+      } else {
+        // Database is empty. Display static fallbacks
+        setGrouped(staticSkills.map(g => ({ category: g.category, skills: g.skills.map(s => s.name) })));
+      }
+    } else {
+      // Server is offline. Load from localStorage
       const cached = localStorage.getItem("cached_skills");
       if (cached) {
         try {
           const parsed = JSON.parse(cached);
-          if (parsed && parsed.length > 0) return groupSkills(parsed);
+          if (parsed && parsed.length > 0) {
+            setGrouped(groupSkills(parsed));
+            return;
+          }
         } catch {}
       }
+      // If no cache, display static fallbacks
+      setGrouped(staticSkills.map(g => ({ category: g.category, skills: g.skills.map(s => s.name) })));
     }
-    return staticSkills.map(g => ({ category: g.category, skills: g.skills.map(s => s.name) }));
-  });
+  }, [initialSkills]);
 
   return (
     <section id="skills" className="section">

@@ -28,7 +28,9 @@ export default function AdminProjects() {
     setLoading(true);
     try {
       const res = await adminApi.getAllProjects();
-      setProjects(res.data || []);
+      // Sort projects by displayOrder ascending
+      const sorted = (res.data || []).sort((a, b) => a.displayOrder - b.displayOrder);
+      setProjects(sorted);
     } catch (err: any) {
       setError(err.message || "Failed to load projects");
     } finally {
@@ -45,7 +47,7 @@ export default function AdminProjects() {
     setDemoUrl("");
     setTechStack("");
     setVisibility("PUBLIC");
-    setDisplayOrder(0);
+    setDisplayOrder(projects.length);
     setError("");
     setModalOpen(true);
   }
@@ -101,6 +103,45 @@ export default function AdminProjects() {
     }
   }
 
+  async function handleMoveProject(project: ProjectEntry, direction: "up" | "down") {
+    const index = projects.findIndex(x => x.id === project.id);
+    if (index === -1) return;
+
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= projects.length) return;
+
+    const targetProject = projects[newIndex];
+
+    const newOrder = [...projects];
+    newOrder[index] = targetProject;
+    newOrder[newIndex] = project;
+
+    setLoading(true);
+    try {
+      // Re-assign displayOrder values as sequential indices
+      for (let i = 0; i < newOrder.length; i++) {
+        const x = newOrder[i];
+        if (x.displayOrder !== i) {
+          await adminApi.updateProject(x.id, {
+            title: x.title,
+            description: x.description,
+            date: x.date,
+            githubUrl: x.githubUrl,
+            demoUrl: x.demoUrl,
+            techStack: x.techStack,
+            visibility: x.visibility,
+            displayOrder: i
+          });
+        }
+      }
+      await fetchProjects();
+    } catch (err: any) {
+      alert("Failed to swap order: " + (err.message || "Unknown error"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div>
       {/* Header */}
@@ -142,49 +183,70 @@ export default function AdminProjects() {
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {projects.map(project => (
+          {projects.map((project, index) => (
             <div key={project.id} className="card" style={{ padding: "20px 24px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <h3 style={{ fontFamily: "Montserrat, sans-serif", fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)" }}>
-                      {project.title}
-                    </h3>
-                    <span style={{
-                      fontSize: "0.68rem", fontWeight: 700, padding: "2px 8px", borderRadius: 12,
-                      background: project.visibility === "PUBLIC" ? "rgba(72,187,120,0.12)" : project.visibility === "PRIVATE" ? "rgba(229,62,62,0.12)" : "rgba(128,90,213,0.12)",
-                      color: project.visibility === "PUBLIC" ? "#48bb78" : project.visibility === "PRIVATE" ? "#e53e3e" : "#805ad5",
-                    }}>
-                      {project.visibility}
-                    </span>
+              <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                {/* Re-order arrows */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                  <button
+                    type="button"
+                    onClick={() => handleMoveProject(project, "up")}
+                    disabled={index === 0 || loading}
+                    style={{ background: "none", border: "none", cursor: index === 0 ? "not-allowed" : "pointer", color: index === 0 ? "var(--text-light-gray, #ccc)" : "var(--accent)", fontSize: "0.95rem", padding: 4, lineHeight: 1 }}
+                    title="Move Up"
+                  >▲</button>
+                  <button
+                    type="button"
+                    onClick={() => handleMoveProject(project, "down")}
+                    disabled={index === projects.length - 1 || loading}
+                    style={{ background: "none", border: "none", cursor: index === projects.length - 1 ? "not-allowed" : "pointer", color: index === projects.length - 1 ? "var(--text-light-gray, #ccc)" : "var(--accent)", fontSize: "0.95rem", padding: 4, lineHeight: 1 }}
+                    title="Move Down"
+                  >▼</button>
+                </div>
+
+                {/* Main Details */}
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                        <h3 style={{ fontFamily: "Montserrat, sans-serif", fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                          {project.title}
+                        </h3>
+                        <span style={{
+                          fontSize: "0.68rem", fontWeight: 700, padding: "2px 8px", borderRadius: 12,
+                          background: project.visibility === "PUBLIC" ? "rgba(72,187,120,0.12)" : project.visibility === "PRIVATE" ? "rgba(229,62,62,0.12)" : "rgba(128,90,213,0.12)",
+                          color: project.visibility === "PUBLIC" ? "#48bb78" : project.visibility === "PRIVATE" ? "#e53e3e" : "#805ad5",
+                        }}>
+                          {project.visibility}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginBottom: 8 }}>
+                        {project.date || "No date"}
+                      </p>
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button
+                        onClick={() => openEditModal(project)}
+                        style={{
+                          padding: "6px 12px", border: "1px solid var(--border-color)", borderRadius: 4,
+                          background: "transparent", color: "var(--text-secondary)", fontSize: "0.75rem",
+                          fontWeight: 600, cursor: "pointer", transition: "all 0.18s",
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(project.id)}
+                        style={{
+                          padding: "6px 12px", border: "1px solid #fed7d7", borderRadius: 4,
+                          background: "transparent", color: "#e53e3e", fontSize: "0.75rem",
+                          fontWeight: 600, cursor: "pointer", transition: "all 0.18s",
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
-                  <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginBottom: 8 }}>
-                    {project.date || "No date"} · Order: {project.displayOrder}
-                  </p>
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button
-                    onClick={() => openEditModal(project)}
-                    style={{
-                      padding: "6px 12px", border: "1px solid var(--border-color)", borderRadius: 4,
-                      background: "transparent", color: "var(--text-secondary)", fontSize: "0.75rem",
-                      fontWeight: 600, cursor: "pointer", transition: "all 0.18s",
-                    }}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(project.id)}
-                    style={{
-                      padding: "6px 12px", border: "1px solid #fed7d7", borderRadius: 4,
-                      background: "transparent", color: "#e53e3e", fontSize: "0.75rem",
-                      fontWeight: 600, cursor: "pointer", transition: "all 0.18s",
-                    }}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
               <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 12 }}>
                 {project.description}
               </p>
@@ -210,7 +272,9 @@ export default function AdminProjects() {
                 </div>
               </div>
             </div>
-          ))}
+          </div>
+        </div>
+      ))}
         </div>
       )}
 

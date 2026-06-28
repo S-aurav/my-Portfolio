@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { experiences as staticExperiences } from "@/lib/data";
 import { ExperienceEntry } from "@/lib/api";
 import { useScrollReveal } from "@/lib/hooks";
@@ -10,28 +10,50 @@ function safeParseArray(json: string | null | undefined): string[] {
   try { return JSON.parse(json); } catch { return []; }
 }
 
-export default function Experience({ initialExperience }: { initialExperience?: ExperienceEntry[] }) {
+export default function Experience({ initialExperience }: { initialExperience?: ExperienceEntry[] | null }) {
   const ref = useScrollReveal();
 
-  useEffect(() => {
-    if (initialExperience && initialExperience.length > 0) {
-      localStorage.setItem("cached_experience", JSON.stringify(initialExperience));
-    }
-  }, [initialExperience]);
+  const [experiences, setExperiences] = useState<ExperienceEntry[]>(initialExperience || []);
 
-  const experiences: ExperienceEntry[] = initialExperience && initialExperience.length > 0
-    ? initialExperience
-    : (() => {
-        if (typeof window !== "undefined") {
-          const cached = localStorage.getItem("cached_experience");
-          if (cached) {
-            try {
-              const parsed = JSON.parse(cached);
-              if (parsed && parsed.length > 0) return parsed as ExperienceEntry[];
-            } catch {}
+  useEffect(() => {
+    if (initialExperience !== undefined && initialExperience !== null) {
+      // Server is online. Cache the response (even if empty)
+      localStorage.setItem("cached_experience", JSON.stringify(initialExperience));
+      if (initialExperience.length > 0) {
+        setExperiences(initialExperience);
+      } else {
+        // Database is empty. Display static fallbacks
+        setExperiences(
+          staticExperiences.map((e, i) => ({
+            id: String(i),
+            role: e.role,
+            company: e.company,
+            duration: e.duration,
+            type: e.type,
+            location: e.location,
+            highlights: JSON.stringify(e.highlights),
+            techStack: JSON.stringify(e.techStack ?? []),
+            displayOrder: i,
+            createdAt: '',
+            updatedAt: '',
+          }))
+        );
+      }
+    } else {
+      // Server is offline. Load from localStorage
+      const cached = localStorage.getItem("cached_experience");
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (parsed && parsed.length > 0) {
+            setExperiences(parsed as ExperienceEntry[]);
+            return;
           }
-        }
-        return staticExperiences.map((e, i) => ({
+        } catch {}
+      }
+      // If no cache, display static fallbacks
+      setExperiences(
+        staticExperiences.map((e, i) => ({
           id: String(i),
           role: e.role,
           company: e.company,
@@ -43,8 +65,10 @@ export default function Experience({ initialExperience }: { initialExperience?: 
           displayOrder: i,
           createdAt: '',
           updatedAt: '',
-        }));
-      })();
+        }))
+      );
+    }
+  }, [initialExperience]);
 
   return (
     <section id="experience" className="section">

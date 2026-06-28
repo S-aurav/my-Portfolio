@@ -1,19 +1,42 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { personalInfo, certifications as staticCerts } from "@/lib/data";
 import { CertificationEntry } from "@/lib/api";
 import { useScrollReveal } from "@/lib/hooks";
 import { useProfile } from "@/context/ProfileContext";
 
-export default function About({ initialCerts }: { initialCerts?: CertificationEntry[] }) {
+export default function About({ initialCerts }: { initialCerts?: CertificationEntry[] | null }) {
   const ref = useScrollReveal();
   const { profile } = useProfile();
 
+  const [certs, setCerts] = useState<CertificationEntry[]>(initialCerts || []);
+
   useEffect(() => {
-    if (initialCerts && initialCerts.length > 0) {
+    if (initialCerts !== undefined && initialCerts !== null) {
+      // Server is online. Cache the response (even if empty)
       localStorage.setItem("cached_certs", JSON.stringify(initialCerts));
+      if (initialCerts.length > 0) {
+        setCerts(initialCerts);
+      } else {
+        // Database is empty. Display static fallbacks
+        setCerts(staticCerts.map((c, i) => ({ id: String(i), name: c, displayOrder: i, createdAt: '', updatedAt: '' })));
+      }
+    } else {
+      // Server is offline. Load from localStorage
+      const cached = localStorage.getItem("cached_certs");
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (parsed && parsed.length > 0) {
+            setCerts(parsed as CertificationEntry[]);
+            return;
+          }
+        } catch {}
+      }
+      // If no cache, display static fallbacks
+      setCerts(staticCerts.map((c, i) => ({ id: String(i), name: c, displayOrder: i, createdAt: '', updatedAt: '' })));
     }
   }, [initialCerts]);
 
@@ -22,18 +45,6 @@ export default function About({ initialCerts }: { initialCerts?: CertificationEn
   const location     = profile?.location    ?? personalInfo.location;
   const email        = profile?.email       ?? personalInfo.email;
   const profileImage = profile?.profileImage || personalInfo.profileImage;
-  
-  const certList: CertificationEntry[] = initialCerts && initialCerts.length > 0
-    ? initialCerts
-    : (() => {
-        if (typeof window !== "undefined") {
-          const cached = localStorage.getItem("cached_certs");
-          if (cached) {
-            try { return JSON.parse(cached) as CertificationEntry[]; } catch {}
-          }
-        }
-        return staticCerts.map((c, i) => ({ id: String(i), name: c, displayOrder: i, createdAt: '', updatedAt: '' }));
-      })();
 
   return (
     <section id="about" className="section">
@@ -79,13 +90,13 @@ export default function About({ initialCerts }: { initialCerts?: CertificationEn
             </div>
 
             {/* Certifications */}
-            {certList.length > 0 && (
+            {certs.length > 0 && (
               <div>
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '8px' }}>
                   Certifications
                 </p>
                 <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                  {certList.map((cert) => (
+                  {certs.map((cert) => (
                     <li key={cert.id} style={{ display: 'flex', gap: '8px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                       <span style={{ color: 'var(--accent)' }}>▸</span>
                       {cert.name}

@@ -5,30 +5,37 @@ import { ProjectEntry } from "@/lib/api";
 import { projects as fallbackProjects } from "@/lib/data";
 import { useScrollReveal } from "@/lib/hooks";
 
-export default function Projects({ initialProjects }: { initialProjects?: ProjectEntry[] }) {
+export default function Projects({ initialProjects }: { initialProjects?: ProjectEntry[] | null }) {
   const ref = useScrollReveal();
 
-  useEffect(() => {
-    if (initialProjects && initialProjects.length > 0) {
-      localStorage.setItem("cached_projects", JSON.stringify(initialProjects));
-    }
-  }, [initialProjects]);
+  const [projects, setProjects] = useState<ProjectEntry[]>(initialProjects || []);
 
-  const [projects] = useState<ProjectEntry[]>(() => {
-    if (initialProjects && initialProjects.length > 0) {
-      return initialProjects;
-    }
-    if (typeof window !== "undefined") {
+  useEffect(() => {
+    if (initialProjects !== undefined && initialProjects !== null) {
+      // Server is online. Cache the response (even if empty)
+      localStorage.setItem("cached_projects", JSON.stringify(initialProjects));
+      if (initialProjects.length > 0) {
+        setProjects(initialProjects);
+      } else {
+        // Database is empty. Display static fallbacks
+        setProjects(mapFallbackProjects());
+      }
+    } else {
+      // Server is offline. Load from localStorage
       const cached = localStorage.getItem("cached_projects");
       if (cached) {
         try {
           const parsed = JSON.parse(cached);
-          if (parsed && parsed.length > 0) return parsed;
+          if (parsed && parsed.length > 0) {
+            setProjects(parsed);
+            return;
+          }
         } catch {}
       }
+      // If no cache, display static fallbacks
+      setProjects(mapFallbackProjects());
     }
-    return mapFallbackProjects();
-  });
+  }, [initialProjects]);
 
   function mapFallbackProjects(): ProjectEntry[] {
     return fallbackProjects.map((p, idx) => ({

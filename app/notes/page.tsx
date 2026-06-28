@@ -6,10 +6,10 @@ import { publicApi, NoteEntry } from "@/lib/api";
 export const revalidate = 60;
 
 export default async function NotesPage() {
-  let notes: NoteEntry[] = [];
+  let notes: NoteEntry[] | null = null;
   try {
     const res = await publicApi.getNotes();
-    if (res?.success && res?.data && res.data.length > 0) {
+    if (res?.success && res?.data) {
       notes = res.data;
     }
   } catch (err) {

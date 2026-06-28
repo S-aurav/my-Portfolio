@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { NoteEntry } from "@/lib/api";
 import ReactMarkdown from "react-markdown";
@@ -30,16 +30,23 @@ function getFallbackNotes(): NoteEntry[] {
   ];
 }
 
-export default function NotesContent({ initialNotes }: { initialNotes?: NoteEntry[] }) {
+export default function NotesContent({ initialNotes }: { initialNotes?: NoteEntry[] | null }) {
   const searchParams = useSearchParams();
   const activeId = searchParams.get("id");
 
-  const [notes] = useState<NoteEntry[]>(() => {
-    if (initialNotes && initialNotes.length > 0) {
-      return initialNotes;
+  const [notes, setNotes] = useState<NoteEntry[]>(initialNotes || []);
+
+  useEffect(() => {
+    if (initialNotes !== undefined && initialNotes !== null) {
+      if (initialNotes.length > 0) {
+        setNotes(initialNotes);
+      } else {
+        setNotes(getFallbackNotes());
+      }
+    } else {
+      setNotes(getFallbackNotes());
     }
-    return getFallbackNotes();
-  });
+  }, [initialNotes]);
 
   // Sort notes by date (newest first)
   const sortedNotes = [...notes].sort(

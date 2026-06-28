@@ -43,11 +43,11 @@ export default async function Home() {
   ]);
 
   const profile = profileRes.status === "fulfilled" && profileRes.value?.success ? profileRes.value.data : null;
-  const projects = projectsRes.status === "fulfilled" && projectsRes.value?.success ? projectsRes.value.data : [];
-  const notes = notesRes.status === "fulfilled" && notesRes.value?.success ? notesRes.value.data : [];
-  const skills = skillsRes.status === "fulfilled" && skillsRes.value?.success ? skillsRes.value.data : [];
-  const experience = experienceRes.status === "fulfilled" && experienceRes.value?.success ? experienceRes.value.data : [];
-  const certs = certsRes.status === "fulfilled" && certsRes.value?.success ? certsRes.value.data : [];
+  const projects = projectsRes.status === "fulfilled" && projectsRes.value?.success ? projectsRes.value.data : null;
+  const notes = notesRes.status === "fulfilled" && notesRes.value?.success ? notesRes.value.data : null;
+  const skills = skillsRes.status === "fulfilled" && skillsRes.value?.success ? skillsRes.value.data : null;
+  const experience = experienceRes.status === "fulfilled" && experienceRes.value?.success ? experienceRes.value.data : null;
+  const certs = certsRes.status === "fulfilled" && certsRes.value?.success ? certsRes.value.data : null;
 
   const rawOrder = profile?.sectionOrder
     ? profile.sectionOrder.split(",").map((s) => s.trim())

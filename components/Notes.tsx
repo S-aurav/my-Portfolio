@@ -17,30 +17,37 @@ function getNoteSummary(content: string): string {
     .trim();
 }
 
-export default function Notes({ initialNotes }: { initialNotes?: NoteEntry[] }) {
+export default function Notes({ initialNotes }: { initialNotes?: NoteEntry[] | null }) {
   const ref = useScrollReveal();
 
-  useEffect(() => {
-    if (initialNotes && initialNotes.length > 0) {
-      localStorage.setItem("cached_notes", JSON.stringify(initialNotes));
-    }
-  }, [initialNotes]);
+  const [notes, setNotes] = useState<NoteEntry[]>(initialNotes || []);
 
-  const [notes] = useState<NoteEntry[]>(() => {
-    if (initialNotes && initialNotes.length > 0) {
-      return initialNotes;
-    }
-    if (typeof window !== "undefined") {
+  useEffect(() => {
+    if (initialNotes !== undefined && initialNotes !== null) {
+      // Server is online. Cache the response (even if empty)
+      localStorage.setItem("cached_notes", JSON.stringify(initialNotes));
+      if (initialNotes.length > 0) {
+        setNotes(initialNotes);
+      } else {
+        // Database is empty. Display static fallbacks
+        setNotes(getFallbackNotes());
+      }
+    } else {
+      // Server is offline. Load from localStorage
       const cached = localStorage.getItem("cached_notes");
       if (cached) {
         try {
           const parsed = JSON.parse(cached);
-          if (parsed && parsed.length > 0) return parsed;
+          if (parsed && parsed.length > 0) {
+            setNotes(parsed);
+            return;
+          }
         } catch {}
       }
+      // If no cache, display static fallbacks
+      setNotes(getFallbackNotes());
     }
-    return getFallbackNotes();
-  });
+  }, [initialNotes]);
 
   function getFallbackNotes(): NoteEntry[] {
     return [

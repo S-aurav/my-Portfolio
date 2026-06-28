@@ -60,6 +60,46 @@ export default function AdminSkills() {
     catch (e: any) { setError(e.message); }
   }
 
+  async function handleMoveSkill(skill: SkillEntry, direction: "up" | "down") {
+    // Find all skills in the same category and sort them by current displayOrder
+    const catSkills = skills
+      .filter(s => s.category === skill.category)
+      .sort((a, b) => a.displayOrder - b.displayOrder);
+
+    const index = catSkills.findIndex(s => s.id === skill.id);
+    if (index === -1) return;
+
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= catSkills.length) return;
+
+    const targetSkill = catSkills[newIndex];
+
+    // Re-create the list with swapped items
+    const newOrder = [...catSkills];
+    newOrder[index] = targetSkill;
+    newOrder[newIndex] = skill;
+
+    setSaving(true);
+    try {
+      // Save displayOrder as the sequential index in the new list
+      for (let i = 0; i < newOrder.length; i++) {
+        const item = newOrder[i];
+        if (item.displayOrder !== i) {
+          await adminApi.updateSkill(item.id, {
+            category: item.category,
+            name: item.name,
+            displayOrder: i
+          });
+        }
+      }
+      await fetchSkills();
+    } catch (e: any) {
+      alert("Failed to update skill order: " + e.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   // Group skills by category for display
   const grouped = skills.reduce((acc, s) => {
     if (!acc[s.category]) acc[s.category] = [];
@@ -93,8 +133,24 @@ export default function AdminSkills() {
             <div key={cat} className="card" style={{ padding: "20px 24px" }}>
               <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14, fontFamily: "Josefin Sans, sans-serif" }}>{cat}</p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {catSkills.sort((a, b) => a.displayOrder - b.displayOrder).map(s => (
+                {catSkills.sort((a, b) => a.displayOrder - b.displayOrder).map((s, idx, arr) => (
                   <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 4, background: "var(--tag-bg)", border: "1px solid var(--border-color)", padding: "4px 10px" }}>
+                    <div style={{ display: "flex", flexDirection: "column", marginRight: 2 }}>
+                      <button
+                        type="button"
+                        onClick={() => handleMoveSkill(s, "up")}
+                        disabled={idx === 0 || saving}
+                        style={{ background: "none", border: "none", cursor: idx === 0 ? "not-allowed" : "pointer", color: idx === 0 ? "var(--text-light-gray, #ccc)" : "var(--accent)", fontSize: "0.55rem", padding: 0, lineHeight: 1 }}
+                        title="Move Up"
+                      >▲</button>
+                      <button
+                        type="button"
+                        onClick={() => handleMoveSkill(s, "down")}
+                        disabled={idx === arr.length - 1 || saving}
+                        style={{ background: "none", border: "none", cursor: idx === arr.length - 1 ? "not-allowed" : "pointer", color: idx === arr.length - 1 ? "var(--text-light-gray, #ccc)" : "var(--accent)", fontSize: "0.55rem", padding: 0, lineHeight: 1 }}
+                        title="Move Down"
+                      >▼</button>
+                    </div>
                     <span style={{ fontFamily: "Inconsolata, monospace", fontSize: "0.8rem", color: "var(--tag-color)" }}>{s.name}</span>
                     <button onClick={() => openEdit(s)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--accent)", fontSize: "0.7rem", padding: "0 2px", lineHeight: 1 }} title="Edit">✎</button>
                     <button onClick={() => handleDelete(s.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#e53e3e", fontSize: "0.7rem", padding: "0 2px", lineHeight: 1 }} title="Delete">✕</button>
