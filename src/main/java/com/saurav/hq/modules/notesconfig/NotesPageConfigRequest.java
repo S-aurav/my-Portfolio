@@ -1,0 +1,31 @@
+package com.saurav.hq.modules.notesconfig;
+
+public record NotesPageConfigRequest(
+        boolean bgEnabled,
+        String bgImageUrl,
+        int bgOpacity,
+        boolean heroEnabled,
+        String heroImageUrl,
+        int heroHeight,
+        int heroImageOpacity,
+        boolean sidebarImageEnabled,
+        String sidebarImageUrl,
+        int sidebarImageOpacity,
+        boolean cornerTLEnabled,
+        String cornerTLImageUrl,
+        int cornerTLSize,
+        int cornerTLFadeIntensity,
+        boolean cornerTREnabled,
+        String cornerTRImageUrl,
+        int cornerTRSize,
+        int cornerTRFadeIntensity,
+        boolean cornerBLEnabled,
+        String cornerBLImageUrl,
+        int cornerBLSize,
+        int cornerBLFadeIntensity,
+        boolean cornerBREnabled,
+        String cornerBRImageUrl,
+        int cornerBRSize,
+        int cornerBRFadeIntensity,
+        String theme
+) {}

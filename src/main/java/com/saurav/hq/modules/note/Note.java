@@ -3,6 +3,7 @@ package com.saurav.hq.modules.note;
 import com.saurav.hq.common.BaseEntity;
 import com.saurav.hq.common.Visibility;
 import jakarta.persistence.*;
+import com.saurav.hq.modules.notesconfig.NoteStyle;
 
 @Entity
 @Table(name = "notes")
@@ -24,6 +25,10 @@ public class Note extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Visibility visibility = Visibility.PUBLIC;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "style_id")
+    private NoteStyle style;
 
     // ── Constructors ─────────────────────────────────────────────────────────
 
@@ -70,4 +75,7 @@ public class Note extends BaseEntity {
     public void setVisibility(Visibility visibility) {
         this.visibility = visibility;
     }
+
+    public NoteStyle getStyle() { return style; }
+    public void setStyle(NoteStyle style) { this.style = style; }
 }

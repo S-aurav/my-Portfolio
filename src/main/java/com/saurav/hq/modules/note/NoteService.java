@@ -3,6 +3,8 @@ package com.saurav.hq.modules.note;
 import com.saurav.hq.common.Visibility;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.saurav.hq.modules.notesconfig.NoteStyle;
+import com.saurav.hq.modules.notesconfig.NoteStyleRepository;
 
 import java.util.List;
 
@@ -11,9 +13,11 @@ import java.util.List;
 public class NoteService {
 
     private final NoteRepository repository;
+    private final NoteStyleRepository styleRepository;
 
-    public NoteService(NoteRepository repository) {
+    public NoteService(NoteRepository repository, NoteStyleRepository styleRepository) {
         this.repository = repository;
+        this.styleRepository = styleRepository;
     }
 
     @Transactional(readOnly = true)
@@ -61,5 +65,13 @@ public class NoteService {
         entity.setContent(req.content().trim());
         entity.setCategory(req.category().trim());
         entity.setVisibility(req.visibility() != null ? req.visibility() : Visibility.PUBLIC);
+
+        if (req.styleId() != null && !req.styleId().isBlank()) {
+            NoteStyle style = styleRepository.findById(req.styleId())
+                    .orElseThrow(() -> new IllegalArgumentException("Style Profile not found with id: " + req.styleId()));
+            entity.setStyle(style);
+        } else {
+            entity.setStyle(null);
+        }
     }
 }

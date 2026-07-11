@@ -6,5 +6,6 @@ public record NoteRequest(
         String title,
         String content,
         String category,
-        Visibility visibility
+        Visibility visibility,
+        String styleId
 ) {}
