@@ -102,7 +102,7 @@ export default function Notes({ initialNotes }: { initialNotes?: NoteEntry[] | n
                     </span>
                   </div>
 
-                  <Link href={`/notes?id=${note.id}`} style={{ textDecoration: 'none' }}>
+                  <Link href={`/notes?id=${note.id}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                     <h3 
                       style={{ 
                         fontFamily: 'Montserrat, sans-serif', 
@@ -131,6 +131,8 @@ export default function Notes({ initialNotes }: { initialNotes?: NoteEntry[] | n
 
                   <Link 
                     href={`/notes?id=${note.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     style={{ 
                       fontSize: '0.74rem', 
                       fontWeight: 700, 
@@ -143,9 +145,8 @@ export default function Notes({ initialNotes }: { initialNotes?: NoteEntry[] | n
                       gap: '4px',
                       textDecoration: 'none'
                     }}
-                    className="hover:underline"
                   >
-                    Read More →
+                    Read More ↗
                   </Link>
                 </div>
               );

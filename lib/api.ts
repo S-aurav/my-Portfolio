@@ -286,6 +286,40 @@ export const adminApi = {
     apiFetch<ApiItemResponse<null>>(`/api/hq/admin/certifications/${id}`, {
       method: "DELETE",
     }).then((res) => { invalidatePublicCache("/api/portfolio/certifications"); return res; }),
+
+  // Notes Page Config
+  getNotesConfig: () =>
+    apiFetch<ApiItemResponse<NotesPageConfig>>("/api/hq/admin/notes-config"),
+
+  saveNotesConfig: (body: NotesPageConfigFormData) =>
+    apiFetch<ApiItemResponse<NotesPageConfig>>("/api/hq/admin/notes-config", {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }).then((res) => { invalidatePublicCache("/api/portfolio/notes-config"); return res; }),
+
+  // Note Styles
+  getAllNoteStyles: () =>
+    apiFetch<ApiListResponse<NoteStyle>>("/api/hq/admin/note-styles"),
+
+  getNoteStyle: (id: string) =>
+    apiFetch<ApiItemResponse<NoteStyle>>(`/api/hq/admin/note-styles/${id}`),
+
+  createNoteStyle: (body: NoteStyleFormData) =>
+    apiFetch<ApiItemResponse<NoteStyle>>("/api/hq/admin/note-styles", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }).then((res) => { invalidatePublicCache("/api/portfolio/notes"); return res; }),
+
+  updateNoteStyle: (id: string, body: NoteStyleFormData) =>
+    apiFetch<ApiItemResponse<NoteStyle>>(`/api/hq/admin/note-styles/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }).then((res) => { invalidatePublicCache("/api/portfolio/notes"); return res; }),
+
+  deleteNoteStyle: (id: string) =>
+    apiFetch<ApiItemResponse<null>>(`/api/hq/admin/note-styles/${id}`, {
+      method: "DELETE",
+    }).then((res) => { invalidatePublicCache("/api/portfolio/notes"); return res; }),
 };
 
 export const publicApi = {
@@ -306,6 +340,9 @@ export const publicApi = {
 
   getCertifications: () =>
     cachedPublicFetch<ApiListResponse<CertificationEntry>>("/api/portfolio/certifications"),
+
+  getNotesConfig: () =>
+    cachedPublicFetch<ApiItemResponse<NotesPageConfig>>("/api/portfolio/notes-config"),
 };
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -370,7 +407,48 @@ export type NoteEntry = {
   visibility: "PUBLIC" | "PRIVATE" | "UNLISTED";
   createdAt: string;
   updatedAt: string;
+
+  styleId?: string | null;
+  style?: NoteStyle | null;
 };
+
+export type NoteStyle = {
+  id: string;
+  name: string;
+  bgEnabled: boolean;
+  bgImageUrl?: string | null;
+  bgOpacity: number;
+  heroEnabled: boolean;
+  heroImageUrl?: string | null;
+  heroImageOpacity: number;
+  sidebarImageEnabled: boolean;
+  sidebarImageUrl?: string | null;
+  sidebarImageOpacity: number;
+
+  cornerTLEnabled: boolean;
+  cornerTLImageUrl?: string | null;
+  cornerTLSize: number;
+  cornerTLFadeIntensity: number;
+
+  cornerTREnabled: boolean;
+  cornerTRImageUrl?: string | null;
+  cornerTRSize: number;
+  cornerTRFadeIntensity: number;
+
+  cornerBLEnabled: boolean;
+  cornerBLImageUrl?: string | null;
+  cornerBLSize: number;
+  cornerBLFadeIntensity: number;
+
+  cornerBREnabled: boolean;
+  cornerBRImageUrl?: string | null;
+  cornerBRSize: number;
+  cornerBRFadeIntensity: number;
+
+  theme: "sky" | "floral" | "forest" | "neutral";
+};
+
+export type NoteStyleFormData = Omit<NoteStyle, "id">;
 
 export type NoteFormData = Omit<NoteEntry, "id" | "createdAt" | "updatedAt">;
 
@@ -430,6 +508,62 @@ export type CertificationEntry = {
 };
 
 export type CertificationFormData = Omit<CertificationEntry, "id" | "createdAt" | "updatedAt">;
+
+export type NotesPageConfig = {
+  id?: number;
+  // Background bleed
+  bgEnabled: boolean;
+  bgImageUrl: string | null;
+  bgOpacity: number;        // 0–100
+  // Hero strip
+  heroEnabled: boolean;
+  heroImageUrl: string | null;
+  heroHeight: number;       // px
+  heroImageOpacity: number; // 0–100
+  // Sidebar art
+  sidebarImageEnabled: boolean;
+  sidebarImageUrl: string | null;
+  sidebarImageOpacity: number; // 0–100
+  // Corner: Top-Left
+  cornerTLEnabled: boolean;
+  cornerTLImageUrl: string | null;
+  cornerTLSize: number;         // px
+  cornerTLFadeIntensity: number; // 0–100
+  // Corner: Top-Right
+  cornerTREnabled: boolean;
+  cornerTRImageUrl: string | null;
+  cornerTRSize: number;
+  cornerTRFadeIntensity: number;
+  // Corner: Bottom-Left
+  cornerBLEnabled: boolean;
+  cornerBLImageUrl: string | null;
+  cornerBLSize: number;
+  cornerBLFadeIntensity: number;
+  // Corner: Bottom-Right
+  cornerBREnabled: boolean;
+  cornerBRImageUrl: string | null;
+  cornerBRSize: number;
+  cornerBRFadeIntensity: number;
+  // Theme
+  theme: "sky" | "floral" | "forest" | "neutral";
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type NotesPageConfigFormData = Omit<NotesPageConfig, "id" | "createdAt" | "updatedAt">;
+
+export function defaultNotesPageConfig(): NotesPageConfig {
+  return {
+    bgEnabled: false, bgImageUrl: null, bgOpacity: 15,
+    heroEnabled: false, heroImageUrl: null, heroHeight: 160, heroImageOpacity: 100,
+    sidebarImageEnabled: false, sidebarImageUrl: null, sidebarImageOpacity: 30,
+    cornerTLEnabled: false, cornerTLImageUrl: null, cornerTLSize: 300, cornerTLFadeIntensity: 60,
+    cornerTREnabled: false, cornerTRImageUrl: null, cornerTRSize: 300, cornerTRFadeIntensity: 60,
+    cornerBLEnabled: false, cornerBLImageUrl: null, cornerBLSize: 300, cornerBLFadeIntensity: 60,
+    cornerBREnabled: false, cornerBRImageUrl: null, cornerBRSize: 300, cornerBRFadeIntensity: 60,
+    theme: "sky",
+  };
+}
 
 type ApiListResponse<T> = { success: boolean; message: string; data: T[] };
 type ApiItemResponse<T> = { success: boolean; message: string; data: T };

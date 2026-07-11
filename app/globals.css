@@ -877,3 +877,413 @@ a.link-accent:hover {
 }
 
 
+/* ============================================
+   STANDALONE NOTES PAGE
+   ============================================ */
+
+/* CSS custom property slots for theme colors (set inline by NotesPageLayout) */
+.notes-standalone-page {
+  --notes-accent: #5aa8d5;
+  --notes-accent-muted: rgba(90,168,213,0.12);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: transparent;
+  z-index: 1;
+}
+
+/* ── Back link ─────────────────────────────────────────────────────────── */
+.notes-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Josefin Sans', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.85);
+  text-decoration: none;
+  transition: color 0.18s;
+}
+
+.notes-back-link:hover {
+  color: #fff;
+}
+
+/* ── Hero Customization Overrides (reuses notes-topbar layout structure) ── */
+.notes-topbar-hero {
+  border-bottom: none !important;
+  overflow: hidden;
+}
+
+.notes-topbar-hero .notes-topbar-title {
+  color: #fff !important;
+}
+
+.notes-topbar-hero .notes-topbar-subtitle {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* ── Minimal Topbar (no hero) ──────────────────────────────────────────── */
+.notes-topbar {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  height: 70px;
+  padding: 0 40px;
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+  z-index: 5;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+[data-theme="dark"] .notes-topbar {
+  background: rgba(19, 23, 28, 0.75);
+}
+
+.notes-topbar-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.notes-topbar-subtitle {
+  font-family: 'Josefin Sans', sans-serif;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.notes-back-link-topbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Josefin Sans', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.18s;
+}
+
+.notes-back-link-topbar:hover {
+  color: var(--notes-accent);
+}
+
+/* ── Two-Panel Body ────────────────────────────────────────────────────── */
+.notes-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  z-index: 1;
+  height: calc(100vh - 70px);
+}
+
+/* Floating left drawer panel (Desktop & Mobile) */
+.notes-sidebar-panel {
+  position: fixed !important;
+  top: 0;
+  left: 0 !important;
+  height: 100vh;
+  width: 300px !important;
+  z-index: 1000 !important;
+  border-right: 1px solid var(--border-color);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transform: translateX(-100%) !important;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: var(--shadow-md);
+}
+
+.notes-sidebar-panel.collapsed {
+  transform: translateX(-100%) !important;
+}
+
+.notes-sidebar-panel:not(.collapsed) {
+  transform: translateX(0) !important;
+}
+
+/* Sidebar right-edge floating toggle pull-tab — fixed to viewport, always visible */
+.notes-sidebar-toggle-tab {
+  position: fixed;
+  top: 50vh;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 56px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-color);
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 3px 0 10px rgba(0, 0, 0, 0.12);
+  z-index: 1001;
+  color: var(--text-secondary);
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s, background 0.2s;
+  padding: 0;
+  outline: none;
+}
+
+.notes-sidebar-toggle-tab:hover {
+  color: var(--notes-accent);
+  background: var(--notes-accent-muted);
+}
+
+.notes-sidebar-tint {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-sidebar);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.notes-sidebar-inner {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.notes-sidebar-inner::-webkit-scrollbar {
+  display: none;
+}
+
+/* Right reader panel spans full viewport width since sidebar floats */
+.notes-reader-panel {
+  flex: 1;
+  overflow-y: auto;
+  height: 100%;
+  width: 100%;
+}
+
+/* ── Note List inside sidebar ──────────────────────────────────────────── */
+.notes-page-list {
+  padding: 20px 0 40px;
+}
+
+.notes-page-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px 12px;
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 8px;
+}
+
+.notes-page-list-label {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.notes-page-list-count {
+  font-family: 'Inconsolata', monospace;
+  font-size: 0.7rem;
+  color: var(--notes-accent);
+  background: var(--notes-accent-muted);
+  padding: 1px 6px;
+  border-radius: 2px;
+}
+
+.notes-page-list-ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.notes-page-list-empty p {
+  padding: 24px 20px;
+  font-size: 0.82rem;
+  color: var(--text-light);
+  font-family: 'Josefin Sans', sans-serif;
+}
+
+.notes-page-list-item {
+  display: block;
+  padding: 12px 20px;
+  border-left: 3px solid transparent;
+  text-decoration: none;
+  transition: all 0.18s ease;
+  background: transparent;
+}
+
+.notes-page-list-item:hover {
+  background: var(--notes-accent-muted);
+  border-left-color: var(--notes-accent);
+}
+
+.notes-page-list-item--active {
+  background: var(--notes-accent-muted);
+  border-left-color: var(--notes-accent);
+}
+
+.notes-page-list-item-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 5px;
+  line-height: 1.4;
+}
+
+.notes-page-list-item-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.notes-page-list-item-date {
+  font-family: 'Inconsolata', monospace;
+  font-size: 0.68rem;
+  color: var(--text-light);
+}
+
+.notes-page-list-item-tag {
+  font-family: 'Inconsolata', monospace;
+  font-size: 0.65rem;
+  color: var(--notes-accent);
+  background: var(--notes-accent-muted);
+  padding: 1px 6px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ── Note Reader ───────────────────────────────────────────────────────── */
+.notes-page-reader {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px 48px 80px;
+}
+
+.notes-page-reader-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+}
+
+.notes-page-reader-empty p {
+  font-family: 'Josefin Sans', sans-serif;
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+.notes-page-reader-header {
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.notes-page-reader-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.notes-page-reader-tag {
+  font-family: 'Inconsolata', monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--notes-accent);
+  background: var(--notes-accent-muted);
+  padding: 3px 10px;
+  border-radius: 2px;
+}
+
+.notes-page-reader-date {
+  font-family: 'Inconsolata', monospace;
+  font-size: 0.78rem;
+  color: var(--text-light);
+}
+
+.notes-page-reader-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.notes-page-reader-body {
+  font-size: 0.96rem;
+  line-height: 1.85;
+  color: var(--text-secondary);
+}
+
+/* ── Responsive: Mobile ────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .notes-topbar {
+    padding: 0 20px;
+    height: 60px;
+  }
+
+  .notes-topbar-title {
+    font-size: 1rem;
+  }
+
+  .notes-topbar-subtitle {
+    font-size: 0.68rem;
+  }
+
+  .notes-body {
+    flex-direction: column;
+    height: calc(100vh - 60px);
+    position: relative;
+  }
+
+  /* Fixed full-viewport drawer on mobile (slides horizontally from top 0 to fill screen) */
+  .notes-sidebar-panel {
+    position: fixed !important;
+    top: 0;
+    left: 0 !important;
+    width: 280px !important;
+    height: 100vh;
+    z-index: 1000 !important;
+    border-right: 1px solid var(--border-color);
+    border-bottom: none;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  .notes-sidebar-panel.collapsed {
+    transform: translateX(-100%) !important;
+    width: 280px !important;
+  }
+
+  .notes-sidebar-inner {
+    height: 100%;
+  }
+
+  .notes-reader-panel {
+    height: 100%;
+    width: 100%;
+  }
+
+  .notes-page-reader {
+    padding: 24px 20px 60px;
+  }
+
+  .notes-page-reader-title {
+    font-size: 1.35rem;
+  }
+}

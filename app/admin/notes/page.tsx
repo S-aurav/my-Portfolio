@@ -1,9 +1,135 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { adminApi, NoteEntry, NoteFormData } from "@/lib/api";
+import { adminApi, NoteEntry, NoteFormData, NoteStyle } from "@/lib/api";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+
+// ── Helper: labeled toggle ─────────────────────────────────────────────────
+function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", marginBottom: 14 }}>
+      <div
+        onClick={() => onChange(!checked)}
+        style={{
+          width: 42, height: 24, borderRadius: 12,
+          background: checked ? "var(--accent)" : "var(--border-color)",
+          position: "relative", cursor: "pointer", transition: "background 0.2s", flexShrink: 0,
+        }}
+      >
+        <div style={{
+          position: "absolute", top: 3, left: checked ? 21 : 3,
+          width: 18, height: 18, borderRadius: "50%", background: "#fff",
+          transition: "left 0.2s", boxShadow: "0 1px 4px rgba(0,0,0,0.18)",
+        }} />
+      </div>
+      <span style={{ fontSize: "0.85rem", color: "var(--text-primary)", fontWeight: 600, fontFamily: "Josefin Sans, sans-serif" }}>
+        {label}
+      </span>
+    </label>
+  );
+}
+
+// ── Helper: labeled text input ─────────────────────────────────────────────
+function Field({ label, value, onChange, placeholder }: {
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string;
+}) {
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 5, fontFamily: "Josefin Sans, sans-serif" }}>
+        {label}
+      </label>
+      <input
+        type="text"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        style={{
+          width: "100%", padding: "8px 12px", borderRadius: 4,
+          border: "1px solid var(--border-color)", background: "var(--bg-main)",
+          color: "var(--text-primary)", fontSize: "0.88rem", fontFamily: "Inconsolata, monospace",
+          outline: "none",
+        }}
+      />
+    </div>
+  );
+}
+
+// ── Helper: labeled slider ──────────────────────────────────────────────────
+function Slider({ label, value, min, max, unit, hint, onChange }: {
+  label: string; value: number; min: number; max: number;
+  unit?: string; hint?: string; onChange: (v: number) => void;
+}) {
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+        <label style={{ fontSize: "0.76rem", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "0.07em", textTransform: "uppercase", fontFamily: "Josefin Sans, sans-serif" }}>
+          {label}
+        </label>
+        <span style={{ fontFamily: "Inconsolata, monospace", fontSize: "0.8rem", color: "var(--accent)", fontWeight: 700 }}>
+          {value}{unit ?? ""}
+          {hint && <span style={{ color: "var(--text-light)", fontWeight: 400, marginLeft: 6, fontSize: "0.72rem" }}>{hint}</span>}
+        </span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        value={value}
+        onChange={e => onChange(Number(e.target.value))}
+        style={{ width: "100%", accentColor: "var(--accent)" }}
+      />
+    </div>
+  );
+}
+
+// ── Helper: corner config block ─────────────────────────────────────────────
+function CornerBlock({
+  label, enabled, imageUrl, size, fadeIntensity,
+  onEnabledChange, onImageChange, onSizeChange, onFadeChange, onPickClick,
+}: {
+  label: string; enabled: boolean; imageUrl: string; size: number; fadeIntensity: number;
+  onEnabledChange: (v: boolean) => void;
+  onImageChange: (v: string) => void;
+  onSizeChange: (v: number) => void;
+  onFadeChange: (v: number) => void;
+  onPickClick?: () => void;
+}) {
+  const fadeHint = fadeIntensity < 30 ? "Tight" : fadeIntensity < 60 ? "Medium" : fadeIntensity < 80 ? "Wide" : "Very Wide";
+  return (
+    <div style={{
+      padding: "16px", borderRadius: 4, border: "1px solid var(--border-color)",
+      background: enabled ? "rgba(74,144,217,0.03)" : "var(--bg-main)",
+      transition: "all 0.2s", marginBottom: 12,
+    }}>
+      <Toggle label={label} checked={enabled} onChange={onEnabledChange} />
+      {enabled && (
+        <>
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+            <div style={{ flex: 1 }}>
+              <Field label="Image URL" value={imageUrl} onChange={onImageChange}
+                placeholder="/imgs/blossom-sky.jpg or https://..." />
+            </div>
+            {onPickClick && (
+              <button type="button" onClick={onPickClick}
+                style={{ padding: "8px 12px", border: "1px solid var(--border-color)", borderRadius: 4, background: "var(--bg-white)", cursor: "pointer", fontSize: "0.78rem", color: "var(--accent)", fontFamily: "Josefin Sans, sans-serif", marginBottom: 14 }}>
+                Pick 🖼️
+              </button>
+            )}
+          </div>
+          {imageUrl && (
+            <div style={{ marginBottom: 12, borderRadius: 4, overflow: "hidden", height: 80 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={imageUrl} alt="preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => (e.currentTarget.style.display = "none")} />
+            </div>
+          )}
+          <Slider label="Size" value={size} min={100} max={600} unit="px" onChange={onSizeChange} />
+          <Slider label="Fade Intensity" value={fadeIntensity} min={10} max={90} unit="%" hint={`(${fadeHint})`} onChange={onFadeChange} />
+        </>
+      )}
+    </div>
+  );
+}
 
 function getNoteSummary(content: string): string {
   return content
@@ -24,10 +150,10 @@ export default function AdminNotes() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<NoteEntry | null>(null);
   const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
-
   const toggleNoteExpand = (id: string) => {
     setExpandedNotes(prev => ({ ...prev, [id]: !prev[id] }));
   };
+  const [activeTab, setActiveTab] = useState<"content" | "design">("content");
 
   // Form states
   const [title, setTitle] = useState("");
@@ -35,6 +161,8 @@ export default function AdminNotes() {
   const [category, setCategory] = useState("");
   const [visibility, setVisibility] = useState<"PUBLIC" | "PRIVATE" | "UNLISTED">("PUBLIC");
   const [previewMode, setPreviewMode] = useState<"edit" | "preview" | "split">("split");
+  const [styleId, setStyleId] = useState("");
+  const [styles, setStyles] = useState<NoteStyle[]>([]);
 
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -55,10 +183,14 @@ export default function AdminNotes() {
   async function fetchNotes() {
     setLoading(true);
     try {
-      const res = await adminApi.getAllNotes();
-      setNotes(res.data || []);
+      const [notesRes, stylesRes] = await Promise.all([
+        adminApi.getAllNotes(),
+        adminApi.getAllNoteStyles()
+      ]);
+      setNotes(notesRes.data || []);
+      setStyles(stylesRes.data || []);
     } catch (err: any) {
-      setError(err.message || "Failed to load notes");
+      setError(err.message || "Failed to load notes data");
     } finally {
       setLoading(false);
     }
@@ -71,7 +203,9 @@ export default function AdminNotes() {
     setCategory("");
     setVisibility("PUBLIC");
     setError("");
+    setActiveTab("content");
     setPreviewMode(isMobile ? "edit" : "split");
+    setStyleId("");
     setModalOpen(true);
   }
 
@@ -82,7 +216,9 @@ export default function AdminNotes() {
     setCategory(note.category);
     setVisibility(note.visibility);
     setError("");
+    setActiveTab("content");
     setPreviewMode(isMobile ? "edit" : "split");
+    setStyleId(note.styleId || "");
     setModalOpen(true);
   }
 
@@ -94,6 +230,7 @@ export default function AdminNotes() {
       content,
       category,
       visibility,
+      styleId: styleId || null,
     };
 
     try {
@@ -177,8 +314,7 @@ export default function AdminNotes() {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      const file = files[0];
-      await handleFileUpload(file);
+      await handleFileUpload(files[0]);
     }
   };
 
@@ -230,71 +366,81 @@ export default function AdminNotes() {
 
             return (
               <div key={note.id} className="card" style={{ padding: "20px 24px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <h3 style={{ fontFamily: "Montserrat, sans-serif", fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)" }}>
-                      {note.title}
-                    </h3>
-                    <span style={{
-                      fontSize: "0.68rem", fontWeight: 700, padding: "2px 8px", borderRadius: 12,
-                      background: note.visibility === "PUBLIC" ? "rgba(72,187,120,0.12)" : note.visibility === "PRIVATE" ? "rgba(229,62,62,0.12)" : "rgba(128,90,213,0.12)",
-                      color: note.visibility === "PUBLIC" ? "#48bb78" : note.visibility === "PRIVATE" ? "#e53e3e" : "#805ad5",
-                    }}>
-                      {note.visibility}
-                    </span>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                      <h3 style={{ fontFamily: "Montserrat, sans-serif", fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                        {note.title}
+                      </h3>
+                      <span style={{
+                        fontSize: "0.68rem", fontWeight: 700, padding: "2px 8px", borderRadius: 12,
+                        background: note.visibility === "PUBLIC" ? "rgba(72,187,120,0.12)" : note.visibility === "PRIVATE" ? "rgba(229,62,62,0.12)" : "rgba(128,90,213,0.12)",
+                        color: note.visibility === "PUBLIC" ? "#48bb78" : note.visibility === "PRIVATE" ? "#e53e3e" : "#805ad5",
+                      }}>
+                        {note.visibility}
+                      </span>
+                      {note.style && (
+                        <span style={{
+                          fontSize: "0.68rem", fontWeight: 700, padding: "2px 8px", borderRadius: 12,
+                          background: "var(--border-color)", color: "var(--text-secondary)",
+                          textTransform: "uppercase"
+                        }}>
+                          🎨 {note.style.name} ({note.style.theme})
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                      Category: <span className="tag" style={{ fontSize: "0.7rem", padding: "1px 6px" }}>{note.category}</span> · Published: {new Date(note.createdAt).toLocaleDateString()}
+                    </p>
                   </div>
-                  <p style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
-                    Category: <span className="tag" style={{ fontSize: "0.7rem", padding: "1px 6px" }}>{note.category}</span> · Published: {new Date(note.createdAt).toLocaleDateString()}
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      onClick={() => openEditModal(note)}
+                      style={{
+                        padding: "6px 12px", border: "1px solid var(--border-color)", borderRadius: 4,
+                        background: "transparent", color: "var(--text-secondary)", fontSize: "0.75rem",
+                        fontWeight: 600, cursor: "pointer", transition: "all 0.18s",
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(note.id)}
+                      style={{
+                        padding: "6px 12px", border: "1px solid #fed7d7", borderRadius: 4,
+                        background: "transparent", color: "#e53e3e", fontSize: "0.75rem",
+                        fontWeight: 600, cursor: "pointer", transition: "all 0.18s",
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+                {isExpanded ? (
+                  <div className="markdown-preview" style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: "12px" }}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{note.content}</ReactMarkdown>
+                  </div>
+                ) : (
+                  <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: isLong ? "12px" : "0px" }}>
+                    {summaryText}{isLong && "..."}
                   </p>
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
+                )}
+                {isLong && (
                   <button
-                    onClick={() => openEditModal(note)}
+                    onClick={() => toggleNoteExpand(note.id)}
                     style={{
-                      padding: "6px 12px", border: "1px solid var(--border-color)", borderRadius: 4,
-                      background: "transparent", color: "var(--text-secondary)", fontSize: "0.75rem",
-                      fontWeight: 600, cursor: "pointer", transition: "all 0.18s",
+                      background: "none", border: "none", color: "var(--accent)",
+                      fontSize: "0.76rem", fontWeight: 700, padding: 0, marginTop: 8,
+                      cursor: "pointer", fontFamily: "Josefin Sans, sans-serif",
+                      letterSpacing: "0.04em", textTransform: "uppercase"
                     }}
                   >
-                    Edit
+                    {isExpanded ? "Collapse ↑" : "Read More ↓"}
                   </button>
-                  <button
-                    onClick={() => handleDelete(note.id)}
-                    style={{
-                      padding: "6px 12px", border: "1px solid #fed7d7", borderRadius: 4,
-                      background: "transparent", color: "#e53e3e", fontSize: "0.75rem",
-                      fontWeight: 600, cursor: "pointer", transition: "all 0.18s",
-                    }}
-                  >
-                    Delete
-                  </button>
-                </div>
+                )}
               </div>
-              {isExpanded ? (
-                <div className="markdown-preview" style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: "12px" }}>
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{note.content}</ReactMarkdown>
-                </div>
-              ) : (
-                <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: isLong ? "12px" : "0px" }}>
-                  {summaryText}{isLong && "..."}
-                </p>
-              )}
-              {isLong && (
-                <button
-                  onClick={() => toggleNoteExpand(note.id)}
-                  style={{
-                    background: "none", border: "none", color: "var(--accent)",
-                    fontSize: "0.76rem", fontWeight: 700, padding: 0, marginTop: 8,
-                    cursor: "pointer", fontFamily: "Josefin Sans, sans-serif",
-                    letterSpacing: "0.04em", textTransform: "uppercase"
-                  }}
-                >
-                  {isExpanded ? "Collapse ↑" : "Read More ↓"}
-                </button>
-              )}
-            </div>
-          );})}
+            );
+          })}
         </div>
       )}
 
@@ -316,121 +462,144 @@ export default function AdminNotes() {
           padding: 16,
         }}>
           <div className="card" style={{ width: "98vw", maxWidth: "1350px", height: "94vh", maxHeight: "95vh", padding: 24, display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <h2 style={{ fontFamily: "Montserrat, sans-serif", fontSize: "1.2rem", fontWeight: 700, color: "var(--text-primary)" }}>
                 {editingNote ? "Edit Note" : "Write Note"}
               </h2>
-              {/* Preview Mode Selector — Edit/Preview only on mobile; Split available on desktop */}
-              <div style={{ display: "flex", gap: 4, background: "var(--border-color)", padding: 2, borderRadius: 4 }}>
-                {(["edit", "preview", ...(isMobile ? [] : ["split"])] as ("edit" | "preview" | "split")[]).map(mode => (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => setPreviewMode(mode)}
-                    style={{
-                      padding: "4px 10px", fontSize: "0.7rem", fontWeight: 700, border: "none", borderRadius: 3,
-                      background: previewMode === mode ? "var(--accent)" : "transparent",
-                      color: previewMode === mode ? "#fff" : "var(--text-secondary)",
-                      cursor: "pointer", textTransform: "uppercase", transition: "all 0.15s",
-                    }}
-                  >
-                    {mode}
-                  </button>
-                ))}
-              </div>
             </div>
 
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12, flex: 1, overflow: "hidden" }}>
-              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "2fr 1fr 1fr", gap: isMobile ? 8 : 12 }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: 4, textTransform: "uppercase" }}>
-                    Title
-                  </label>
-                  <input
-                    type="text" value={title} onChange={e => setTitle(e.target.value)} required
-                    style={{ width: "100%", padding: "7px 10px", border: "1px solid var(--border-color)", borderRadius: 4, background: "var(--bg-white)", color: "var(--text-primary)", outline: "none", fontSize: "0.85rem" }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: 4, textTransform: "uppercase" }}>
-                    Category
-                  </label>
-                  <input
-                    type="text" value={category} onChange={e => setCategory(e.target.value)} required placeholder="e.g. Tech"
-                    style={{ width: "100%", padding: "7px 10px", border: "1px solid var(--border-color)", borderRadius: 4, background: "var(--bg-white)", color: "var(--text-primary)", outline: "none", fontSize: "0.85rem" }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: 4, textTransform: "uppercase" }}>
-                    Visibility
-                  </label>
-                  <select
-                    value={visibility} onChange={e => setVisibility(e.target.value as any)}
-                    style={{ width: "100%", padding: "7px 10px", border: "1px solid var(--border-color)", borderRadius: 4, background: "var(--bg-white)", color: "var(--text-primary)", outline: "none", fontSize: "0.85rem" }}
-                  >
-                    <option value="PUBLIC">PUBLIC</option>
-                    <option value="PRIVATE">PRIVATE</option>
-                    <option value="UNLISTED">UNLISTED</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Formatting Toolbar */}
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", background: "var(--bg-main)", padding: "6px 10px", borderRadius: 4, border: "1px solid var(--border-color)" }}>
-                <button type="button" onClick={() => insertText("**", "**")} style={{ padding: "4px 8px", fontSize: "0.75rem", border: "1px solid var(--border-color)", background: "var(--bg-white)", color: "var(--text-primary)", borderRadius: 4, cursor: "pointer", fontWeight: "bold" }}>B</button>
-                <button type="button" onClick={() => insertText("*", "*")} style={{ padding: "4px 8px", fontSize: "0.75rem", border: "1px solid var(--border-color)", background: "var(--bg-white)", color: "var(--text-primary)", borderRadius: 4, cursor: "pointer", fontStyle: "italic" }}>I</button>
-                <button type="button" onClick={() => insertText("### ")} style={{ padding: "4px 8px", fontSize: "0.75rem", border: "1px solid var(--border-color)", background: "var(--bg-white)", color: "var(--text-primary)", borderRadius: 4, cursor: "pointer" }}>H3</button>
-                <button type="button" onClick={() => insertText("```\n", "\n```")} style={{ padding: "4px 8px", fontSize: "0.75rem", border: "1px solid var(--border-color)", background: "var(--bg-white)", color: "var(--text-primary)", borderRadius: 4, cursor: "pointer", fontFamily: "monospace" }}>Code</button>
-                <button type="button" onClick={() => insertText("[", "](url)")} style={{ padding: "4px 8px", fontSize: "0.75rem", border: "1px solid var(--border-color)", background: "var(--bg-white)", color: "var(--text-primary)", borderRadius: 4, cursor: "pointer" }}>Link</button>
-                <button type="button" onClick={() => fileInputRef.current?.click()} style={{ padding: "4px 8px", fontSize: "0.75rem", border: "1px solid var(--border-color)", background: "rgba(74,144,217,0.1)", color: "var(--accent)", borderRadius: 4, cursor: "pointer", fontWeight: 600 }}>
-                  {uploading ? "Uploading..." : "Upload Media 📁"}
-                </button>
-                <span style={{ fontSize: "0.68rem", color: "var(--text-light)", marginLeft: "auto", alignSelf: "center" }}>
-                  💡 Drag & Drop media directly into the editor pane
-                </span>
-              </div>
-
-              {/* Editor Workspace */}
-              <div style={{ display: "flex", gap: 16, flex: 1, overflow: "hidden", minHeight: 280 }}>
-                {/* Left Pane: Editor */}
-                {(previewMode === "edit" || previewMode === "split") && (
-                  <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%" }}>
-                    <textarea
-                      id="note-content-input"
-                      value={content}
-                      onChange={e => setContent(e.target.value)}
-                      onDrop={handleDrop}
-                      onDragOver={e => e.preventDefault()}
-                      required
-                      placeholder="Write your thoughts in Markdown... Drag & Drop images/gifs/videos here to upload."
-                      style={{
-                        width: "100%", flex: 1, padding: 12, border: "1px solid var(--border-color)", borderRadius: 4,
-                        background: "var(--bg-white)", color: "var(--text-primary)", outline: "none", resize: "none",
-                        fontFamily: "monospace", fontSize: "0.85rem", lineHeight: 1.5
-                      }}
+              <div style={{ display: "flex", flexDirection: "column", gap: 12, flex: 1, overflow: "hidden" }}>
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "2fr 1fr 1fr 1fr", gap: isMobile ? 8 : 12 }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: 4, textTransform: "uppercase" }}>
+                      Title
+                    </label>
+                    <input
+                      type="text" value={title} onChange={e => setTitle(e.target.value)} required
+                      style={{ width: "100%", padding: "7px 10px", border: "1px solid var(--border-color)", borderRadius: 4, background: "var(--bg-white)", color: "var(--text-primary)", outline: "none", fontSize: "0.85rem" }}
                     />
                   </div>
-                )}
-
-                {/* Right Pane: Live Preview */}
-                {(previewMode === "preview" || previewMode === "split") && (
-                  <div style={{
-                    flex: 1, border: "1px solid var(--border-color)", borderRadius: 4, padding: 12,
-                    background: "var(--bg-main)", overflowY: "auto", height: "100%"
-                  }}>
-                    <div className="markdown-preview" style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6 }}>
-                      {content.trim() ? (
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-                      ) : (
-                        <p style={{ color: "var(--text-light)", fontStyle: "italic" }}>Nothing to preview</p>
-                      )}
-                    </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: 4, textTransform: "uppercase" }}>
+                      Category
+                    </label>
+                    <input
+                      type="text" value={category} onChange={e => setCategory(e.target.value)} required placeholder="e.g. Tech"
+                      style={{ width: "100%", padding: "7px 10px", border: "1px solid var(--border-color)", borderRadius: 4, background: "var(--bg-white)", color: "var(--text-primary)", outline: "none", fontSize: "0.85rem" }}
+                    />
                   </div>
-                )}
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: 4, textTransform: "uppercase" }}>
+                      Visibility
+                    </label>
+                    <select
+                      value={visibility} onChange={e => setVisibility(e.target.value as any)}
+                      style={{ width: "100%", padding: "7px 10px", border: "1px solid var(--border-color)", borderRadius: 4, background: "var(--bg-white)", color: "var(--text-primary)", outline: "none", fontSize: "0.85rem" }}
+                    >
+                      <option value="PUBLIC">PUBLIC</option>
+                      <option value="PRIVATE">PRIVATE</option>
+                      <option value="UNLISTED">UNLISTED</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: 4, textTransform: "uppercase" }}>
+                      Theme Style Profile
+                    </label>
+                    <select
+                      value={styleId || ""}
+                      onChange={e => setStyleId(e.target.value)}
+                      style={{ width: "100%", padding: "7px 10px", border: "1px solid var(--border-color)", borderRadius: 4, background: "var(--bg-white)", color: "var(--text-primary)", outline: "none", fontSize: "0.85rem" }}
+                    >
+                      <option value="">Default Global Theme (None)</option>
+                      {styles.map(s => (
+                        <option key={s.id} value={s.id}>{s.name} ({s.theme.toUpperCase()})</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Formatting Toolbar */}
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", background: "var(--bg-main)", padding: "6px 10px", borderRadius: 4, border: "1px solid var(--border-color)" }}>
+                  <button type="button" onClick={() => insertText("**", "**")} style={{ padding: "4px 8px", fontSize: "0.75rem", border: "1px solid var(--border-color)", background: "var(--bg-white)", color: "var(--text-primary)", borderRadius: 4, cursor: "pointer", fontWeight: "bold" }}>B</button>
+                  <button type="button" onClick={() => insertText("*", "*")} style={{ padding: "4px 8px", fontSize: "0.75rem", border: "1px solid var(--border-color)", background: "var(--bg-white)", color: "var(--text-primary)", borderRadius: 4, cursor: "pointer", fontStyle: "italic" }}>I</button>
+                  <button type="button" onClick={() => insertText("### ")} style={{ padding: "4px 8px", fontSize: "0.75rem", border: "1px solid var(--border-color)", background: "var(--bg-white)", color: "var(--text-primary)", borderRadius: 4, cursor: "pointer" }}>H3</button>
+                  <button type="button" onClick={() => insertText("```\n", "\n```")} style={{ padding: "4px 8px", fontSize: "0.75rem", border: "1px solid var(--border-color)", background: "var(--bg-white)", color: "var(--text-primary)", borderRadius: 4, cursor: "pointer", fontFamily: "monospace" }}>Code</button>
+                  <button type="button" onClick={() => insertText("[", "](url)")} style={{ padding: "4px 8px", fontSize: "0.75rem", border: "1px solid var(--border-color)", background: "var(--bg-white)", color: "var(--text-primary)", borderRadius: 4, cursor: "pointer" }}>Link</button>
+                  <button type="button" onClick={() => fileInputRef.current?.click()} style={{ padding: "4px 8px", fontSize: "0.75rem", border: "1px solid var(--border-color)", background: "rgba(74,144,217,0.1)", color: "var(--accent)", borderRadius: 4, cursor: "pointer", fontWeight: 600 }}>
+                    {uploading ? "Uploading..." : "Upload Media 📁"}
+                  </button>
+                  <span style={{ fontSize: "0.68rem", color: "var(--text-light)", marginLeft: "auto", alignSelf: "center" }}>
+                    💡 Drag & Drop media directly into the editor pane
+                  </span>
+                </div>
+
+                {/* Editor Workspace */}
+                <div style={{ display: "flex", gap: 16, flex: 1, overflow: "hidden", minHeight: 280 }}>
+                  {/* Left Pane: Editor */}
+                  {(previewMode === "edit" || previewMode === "split") && (
+                    <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%" }}>
+                      <textarea
+                        id="note-content-input"
+                        value={content}
+                        onChange={e => setContent(e.target.value)}
+                        onDrop={handleDrop}
+                        onDragOver={e => e.preventDefault()}
+                        required
+                        placeholder="Write your thoughts in Markdown... Drag & Drop images/gifs/videos here to upload."
+                        style={{
+                          width: "100%", flex: 1, padding: 12, border: "1px solid var(--border-color)", borderRadius: 4,
+                          background: "var(--bg-white)", color: "var(--text-primary)", outline: "none", resize: "none",
+                          fontFamily: "monospace", fontSize: "0.85rem", lineHeight: 1.5
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Right Pane: Live Preview */}
+                  {(previewMode === "preview" || previewMode === "split") && (
+                    <div style={{
+                      flex: 1, border: "1px solid var(--border-color)", borderRadius: 4, padding: 12,
+                      background: "var(--bg-main)", overflowY: "auto", height: "100%"
+                    }}>
+                      <div className="markdown-preview" style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6 }}>
+                        {content.trim() ? (
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+                        ) : (
+                          <p style={{ color: "var(--text-light)", fontStyle: "italic" }}>Nothing to preview</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Preview Selector (Inline inside panel for quick toggle) */}
+                <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
+                    Preview Mode:
+                  </span>
+                  <div style={{ display: "flex", gap: 2, background: "var(--border-color)", padding: 2, borderRadius: 4 }}>
+                    {(["edit", "preview", ...(isMobile ? [] : ["split"])] as const).map(mode => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => setPreviewMode(mode as "edit" | "preview" | "split")}
+                        style={{
+                          padding: "3px 8px", fontSize: "0.65rem", fontWeight: 700, border: "none", borderRadius: 3,
+                          background: previewMode === mode ? "var(--accent)" : "transparent",
+                          color: previewMode === mode ? "#fff" : "var(--text-secondary)",
+                          cursor: "pointer", textTransform: "uppercase", transition: "all 0.15s",
+                        }}
+                      >
+                        {mode}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {error && (
-                <p style={{ fontSize: "0.82rem", color: "#e53e3e", background: "#fff5f5", border: "1px solid #fed7d7", borderRadius: 4, padding: "8px 12px" }}>
+                <p style={{ fontSize: "0.82rem", color: "#e53e3e", background: "#fff5f5", border: "1px solid #fed7d7", borderRadius: 4, padding: "8px 12px", margin: 0 }}>
                   {error}
                 </p>
               )}
