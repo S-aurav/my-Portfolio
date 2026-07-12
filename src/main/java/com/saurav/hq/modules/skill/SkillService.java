@@ -50,5 +50,6 @@ public class SkillService {
         entity.setCategory(req.category().trim());
         entity.setName(req.name().trim());
         entity.setDisplayOrder(req.displayOrder());
+        entity.setLogoUrl(req.logoUrl());
     }
 }

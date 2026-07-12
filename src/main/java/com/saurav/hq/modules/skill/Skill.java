@@ -20,6 +20,9 @@ public class Skill extends BaseEntity {
     @Column(nullable = false)
     private int displayOrder = 0;
 
+    @Column
+    private String logoUrl;
+
     // ── Constructors ─────────────────────────────────────────────────────────
 
     public Skill() {}
@@ -56,5 +59,13 @@ public class Skill extends BaseEntity {
 
     public void setDisplayOrder(int displayOrder) {
         this.displayOrder = displayOrder;
+    }
+
+    public String getLogoUrl() {
+        return logoUrl;
+    }
+
+    public void setLogoUrl(String logoUrl) {
+        this.logoUrl = logoUrl;
     }
 }
