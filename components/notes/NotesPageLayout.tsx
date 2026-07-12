@@ -53,7 +53,9 @@ export default function NotesPageLayout({ notes, config }: NotesPageLayoutProps)
   // Close dropdown when clicking outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+      const isInsideSearch = searchRef.current && searchRef.current.contains(e.target as Node);
+      const isInsideDropdown = document.querySelector(".notes-search-dropdown")?.contains(e.target as Node);
+      if (!isInsideSearch && !isInsideDropdown) {
         setSearchOpen(false);
       }
     };
@@ -80,6 +82,9 @@ export default function NotesPageLayout({ notes, config }: NotesPageLayoutProps)
     if (typeof window === "undefined") return;
     const handleScroll = () => {
       setScrollY(window.scrollY);
+      // Close sidebar when window scrolls
+      setIsSidebarOpen(false);
+      setIsLocked(false);
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
@@ -334,6 +339,8 @@ export default function NotesPageLayout({ notes, config }: NotesPageLayoutProps)
             className={`notes-sidebar-panel ${!isSidebarOpen ? "collapsed" : ""}`}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
+            onWheel={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
             style={{
               top: topOffset,
               height: `calc(100vh - ${topOffset}px)`,
@@ -377,9 +384,9 @@ export default function NotesPageLayout({ notes, config }: NotesPageLayoutProps)
           <button
             onClick={handleToggleClick}
             onMouseEnter={handleMouseEnter}
-            className="notes-sidebar-toggle-tab"
+            className={`notes-sidebar-toggle-tab ${isSidebarOpen ? "open" : ""}`}
             style={{
-              left: isSidebarOpen ? "300px" : "0px",
+              left: isSidebarOpen ? "var(--notes-sidebar-width, 300px)" : "0px",
               top: `calc(${topOffset}px + (100vh - ${topOffset}px) / 2)`
             }}
             title={isSidebarOpen ? "Close list" : "Open list"}
@@ -400,6 +407,11 @@ export default function NotesPageLayout({ notes, config }: NotesPageLayoutProps)
             className="notes-reader-panel"
             onClick={handleContentClick}
             onMouseEnter={handleContentHover}
+            onScroll={() => {
+              // Close sidebar when scrolling the note content
+              setIsSidebarOpen(false);
+              setIsLocked(false);
+            }}
           >
             <NoteReader note={activeNote} />
           </main>
