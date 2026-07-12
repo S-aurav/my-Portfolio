@@ -476,12 +476,14 @@ export type SkillEntry = {
   id: string;
   category: string;
   name: string;
+  logoUrl?: string | null;
   displayOrder: number;
   createdAt: string;
   updatedAt: string;
 };
 
 export type SkillFormData = Omit<SkillEntry, "id" | "createdAt" | "updatedAt">;
+
 
 export type ExperienceEntry = {
   id: string;

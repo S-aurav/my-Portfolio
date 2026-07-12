@@ -22,7 +22,27 @@
   --tag-color: #4a6580;
   --shadow-sm: 0 1px 4px rgba(0,0,0,0.06);
   --shadow-md: 0 2px 12px rgba(0,0,0,0.08);
+  --grid-dot-color: rgba(0, 0, 0, 0.1);
+  --grid-dot-size: 1.5px;
+  --grid-line-color: rgba(0, 0, 0, 0.06);
+  --grid-spacing: 28px;
 }
+
+/* ── Global box-grid background (fixed, covers entire viewport) ─────────── */
+html::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+   radial-gradient(circle, var(--grid-dot-color) var(--grid-dot-size), transparent var(--grid-dot-size));
+    /* linear-gradient(to right, var(--grid-line-color) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line-color) 1px, transparent 1px); */
+  background-size: var(--grid-spacing) var(--grid-spacing);
+  background-position: center center;
+}
+
 
 [data-theme="dark"] {
   --bg-main: #0c0f12;
@@ -40,6 +60,8 @@
   --tag-color: #58a6ff;
   --shadow-sm: 0 1px 4px rgba(0,0,0,0.25);
   --shadow-md: 0 4px 20px rgba(0,0,0,0.35);
+  --grid-dot-color: rgba(255, 255, 255, 0.07);
+  --grid-line-color: rgba(255, 255, 255, 0.05);
 }
 
 body, .sidebar, .card, .section-title::after, .sidebar-divider, .timeline::before, .skill-pill {
@@ -424,6 +446,68 @@ body {
   border-color: var(--accent);
   color: var(--accent);
   background: rgba(74, 144, 217, 0.04);
+}
+
+/* ── Skill Badge (logo + text card) ─────────────────────────────────────── */
+.skill-category-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  font-family: 'Josefin Sans', sans-serif;
+}
+
+.skill-badges-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.skill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px 7px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-white);
+  cursor: default;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.skill-badge:hover {
+  border-color: var(--accent);
+  box-shadow: 0 3px 12px rgba(74, 144, 217, 0.12);
+  transform: translateY(-1px);
+}
+
+.skill-badge-logo {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 3px;
+}
+
+/* In dark mode, SimpleIcons SVGs (black by default) are invisible — invert them */
+[data-theme="dark"] .skill-badge-logo {
+  filter: invert(1) brightness(0.85);
+}
+
+.skill-badge-name {
+  font-family: 'Josefin Sans', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.skill-badge:hover .skill-badge-name {
+  color: var(--accent);
 }
 
 /* ============================================
@@ -977,6 +1061,230 @@ a.link-accent:hover {
 
 .notes-back-link-topbar:hover {
   color: var(--notes-accent);
+}
+
+/* ── Notes Search Bar ───────────────────────────────────────────────────── */
+.notes-search-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.notes-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  height: 36px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  width: 200px;
+}
+
+.notes-search-box:focus-within {
+  border-color: var(--notes-accent, #5aa8d5);
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 0 0 3px rgba(90, 168, 213, 0.12);
+  width: 260px;
+}
+
+/* Light mode (non-hero) */
+[data-theme="light"] .notes-search-box:not(.hero-mode) {
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+[data-theme="light"] .notes-search-box:not(.hero-mode):focus-within {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+/* Dark mode (non-hero) */
+[data-theme="dark"] .notes-search-box:not(.hero-mode) {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.notes-search-icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.55);
+  transition: color 0.2s;
+}
+
+[data-theme="light"] .notes-search-box:not(.hero-mode) .notes-search-icon {
+  color: var(--text-muted);
+}
+
+.notes-search-box:focus-within .notes-search-icon {
+  color: var(--notes-accent, #5aa8d5);
+}
+
+.notes-search-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: 'Josefin Sans', sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.9);
+  caret-color: var(--notes-accent, #5aa8d5);
+}
+
+[data-theme="light"] .notes-search-box:not(.hero-mode) .notes-search-input {
+  color: var(--text-primary);
+}
+
+.notes-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+  font-style: italic;
+}
+
+[data-theme="light"] .notes-search-box:not(.hero-mode) .notes-search-input::placeholder {
+  color: var(--text-light);
+}
+
+.notes-search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+  padding: 0;
+}
+
+[data-theme="light"] .notes-search-box:not(.hero-mode) .notes-search-clear {
+  background: var(--border-light);
+  color: var(--text-muted);
+}
+
+.notes-search-clear:hover {
+  background: rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+
+/* Dropdown — position is set inline as fixed, these are visual styles only */
+.notes-search-dropdown {
+  min-width: 280px;
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  animation: searchDropdownIn 0.15s ease;
+}
+
+[data-theme="dark"] .notes-search-dropdown {
+  background: #1a1f26;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes searchDropdownIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.notes-search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+  animation: searchResultIn 0.2s ease both;
+}
+
+[data-theme="dark"] .notes-search-result-item {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+.notes-search-result-item:last-child {
+  border-bottom: none;
+}
+
+.notes-search-result-item:hover {
+  background: var(--border-light);
+}
+
+[data-theme="dark"] .notes-search-result-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+@keyframes searchResultIn {
+  from { opacity: 0; transform: translateX(6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.notes-search-result-title {
+  flex: 1;
+  font-family: 'Josefin Sans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.01em;
+}
+
+.notes-search-result-category {
+  font-family: 'Inconsolata', monospace;
+  font-size: 0.68rem;
+  color: var(--notes-accent, #5aa8d5);
+  background: var(--notes-accent-muted, rgba(90,168,213,0.1));
+  padding: 2px 7px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.notes-search-no-results {
+  padding: 14px 16px;
+  font-family: 'Josefin Sans', sans-serif;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+}
+
+/* Responsive: full-width on small screens */
+@media (max-width: 600px) {
+  .notes-search-wrapper {
+    width: 100%;
+  }
+  .notes-search-box,
+  .notes-search-box:focus-within {
+    width: 100%;
+    border-radius: 8px;
+  }
+  .notes-search-dropdown {
+    left: 0;
+    right: 0;
+    min-width: unset;
+  }
+}
+
+/* Smooth width transition */
+.notes-search-box {
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s, width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ── Two-Panel Body ────────────────────────────────────────────────────── */

@@ -18,6 +18,7 @@ export default function AdminSkills() {
 
   const [category, setCategory] = useState("");
   const [name, setName] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
   const [displayOrder, setDisplayOrder] = useState(0);
   const [saving, setSaving] = useState(false);
 
@@ -33,18 +34,18 @@ export default function AdminSkills() {
   }
 
   function openCreate() {
-    setEditing(null); setCategory(""); setName(""); setDisplayOrder(skills.length);
+    setEditing(null); setCategory(""); setName(""); setLogoUrl(""); setDisplayOrder(skills.length);
     setError(""); setModalOpen(true);
   }
   function openEdit(s: SkillEntry) {
-    setEditing(s); setCategory(s.category); setName(s.name); setDisplayOrder(s.displayOrder);
+    setEditing(s); setCategory(s.category); setName(s.name); setLogoUrl(s.logoUrl || ""); setDisplayOrder(s.displayOrder);
     setError(""); setModalOpen(true);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true); setError("");
-    const body: SkillFormData = { category: category.trim(), name: name.trim(), displayOrder };
+    const body: SkillFormData = { category: category.trim(), name: name.trim(), logoUrl: logoUrl.trim() || null, displayOrder };
     try {
       if (editing) await adminApi.updateSkill(editing.id, body);
       else await adminApi.createSkill(body);
@@ -151,6 +152,10 @@ export default function AdminSkills() {
                         title="Move Down"
                       >▼</button>
                     </div>
+                    {s.logoUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={s.logoUrl} alt="" style={{ width: 14, height: 14, objectFit: "contain", flexShrink: 0 }} />
+                    )}
                     <span style={{ fontFamily: "Inconsolata, monospace", fontSize: "0.8rem", color: "var(--tag-color)" }}>{s.name}</span>
                     <button onClick={() => openEdit(s)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--accent)", fontSize: "0.7rem", padding: "0 2px", lineHeight: 1 }} title="Edit">✎</button>
                     <button onClick={() => handleDelete(s.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#e53e3e", fontSize: "0.7rem", padding: "0 2px", lineHeight: 1 }} title="Delete">✕</button>
@@ -178,6 +183,18 @@ export default function AdminSkills() {
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>Skill Name</label>
                 <input value={name} onChange={e => setName(e.target.value)} required style={inputStyle} placeholder="e.g. Spring Boot" />
+              </div>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>Logo URL</label>
+                <input value={logoUrl} onChange={e => setLogoUrl(e.target.value)} style={inputStyle} placeholder="https://cdn.simpleicons.org/springboot" />
+                <p style={{ fontSize: "0.68rem", color: "var(--text-light)", marginTop: 4 }}>Tip: use https://cdn.simpleicons.org/[name] for tech logos (e.g. /javascript, /postgresql, /docker)</p>
+                {logoUrl && (
+                  <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8 }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={logoUrl} alt="preview" style={{ width: 28, height: 28, objectFit: "contain" }} onError={e => (e.currentTarget.style.display = "none")} />
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Preview</span>
+                  </div>
+                )}
               </div>
               <div style={{ marginBottom: 20 }}>
                 <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>Display Order</label>
