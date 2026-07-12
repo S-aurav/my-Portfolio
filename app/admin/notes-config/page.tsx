@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { adminApi, NoteStyle, NoteStyleFormData } from "@/lib/api";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -149,19 +149,7 @@ function CornerBlock({
   );
 }
 
-// ── Available bundled images for quick-pick ─────────────────────────────────
-const BUNDLED_IMAGES = [
-  { label: "Tree & Sky",         url: "/imgs/tree-sky.jpg" },
-  { label: "Blue Flowers",       url: "/imgs/flowers-blue.jpg" },
-  { label: "Blue Flowers 2",     url: "/imgs/flowers-blue-2.jpg" },
-  { label: "Blossom Sky",        url: "/imgs/blossom-sky.jpg" },
-  { label: "Blossom Sky 2",      url: "/imgs/blossom-sky-2.jpg" },
-  { label: "Blossom Sky 3",      url: "/imgs/blossom-sky-3.jpg" },
-  { label: "Red Leaves & Sun",   url: "/imgs/red-leaves-sun.jpg" },
-  { label: "Red Leaves & Sun 2", url: "/imgs/red-leaves-sun-2.jpg" },
-  { label: "Red Leaves & Sun 3", url: "/imgs/red-leaves-sun-3.jpg" },
-  { label: "Red Leaves & Sun 4", url: "/imgs/red-leaves-sun-4.jpg" },
-];
+// Previously contained BUNDLED_IMAGES, now removed in favor of dynamically loaded images.
 
 const THEME_INFO = {
   sky: { label: "Sky Blue", color: "#5aa8d5" },
@@ -218,6 +206,21 @@ export default function NotesStylesPage() {
   const [uploading, setUploading] = useState(false);
   const [pickerTarget, setPickerTarget] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Compute all unique uploaded images from existing styles
+  const uploadedImages = useMemo(() => {
+    const urls = new Set<string>();
+    styles.forEach(s => {
+      if (s.bgImageUrl) urls.add(s.bgImageUrl);
+      if (s.heroImageUrl) urls.add(s.heroImageUrl);
+      if (s.sidebarImageUrl) urls.add(s.sidebarImageUrl);
+      if (s.cornerTLImageUrl) urls.add(s.cornerTLImageUrl);
+      if (s.cornerTRImageUrl) urls.add(s.cornerTRImageUrl);
+      if (s.cornerBLImageUrl) urls.add(s.cornerBLImageUrl);
+      if (s.cornerBRImageUrl) urls.add(s.cornerBRImageUrl);
+    });
+    return Array.from(urls).map((url, i) => ({ label: `Uploaded ${i + 1}`, url }));
+  }, [styles]);
 
   // Mobile detection
   const [isMobile, setIsMobile] = useState(false);
@@ -545,25 +548,32 @@ export default function NotesStylesPage() {
               Pick a Botanical image:
             </h3>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-              {BUNDLED_IMAGES.map(img => (
-                <button
-                  key={img.url}
-                  onClick={() => {
-                    updateFieldByTarget(pickerTarget, img.url);
-                    setPickerTarget(null);
-                  }}
-                  style={{
-                    border: "2px solid var(--border-color)", borderRadius: 4, overflow: "hidden",
-                    cursor: "pointer", padding: 0, background: "none", textAlign: "left",
-                  }}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={img.url} alt={img.label} style={{ width: "100%", height: 90, objectFit: "cover", display: "block" }} />
-                  <p style={{ padding: "4px 6px", fontSize: "0.68rem", fontFamily: "Josefin Sans, sans-serif", color: "var(--text-muted)" }}>
-                    {img.label}
-                  </p>
-                </button>
-              ))}
+              {uploadedImages.length > 0 ? (
+                uploadedImages.map(img => (
+                  <button
+                    key={img.url}
+                    onClick={() => {
+                      updateFieldByTarget(pickerTarget, img.url);
+                      setPickerTarget(null);
+                    }}
+                    style={{
+                      border: "2px solid var(--border-color)", borderRadius: 4, overflow: "hidden",
+                      cursor: "pointer", padding: 0, background: "none", textAlign: "left",
+                    }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={img.url} alt={img.label} style={{ width: "100%", height: 90, objectFit: "cover", display: "block" }} />
+                    <p style={{ padding: "4px 6px", fontSize: "0.68rem", fontFamily: "Josefin Sans, sans-serif", color: "var(--text-muted)" }}>
+                      {img.label}
+                    </p>
+                  </button>
+                ))
+              ) : (
+                <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: 20, color: "var(--text-light)" }}>
+                  <p>No images have been uploaded to styles yet.</p>
+                  <p style={{ fontSize: "0.8rem", marginTop: 4 }}>Upload an image from your device to see it here later.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
