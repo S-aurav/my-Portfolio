@@ -40,6 +40,7 @@ public class ProfileService {
         } else {
             profile.setSectionOrder("about,skills,experience,projects,notes,contact");
         }
+        profile.setAboutFieldsConfig(req.aboutFieldsConfig());
         
         return repository.save(profile);
     }

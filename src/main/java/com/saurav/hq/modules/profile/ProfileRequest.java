@@ -12,5 +12,6 @@ public record ProfileRequest(
         String githubUrl,
         String linkedinUrl,
         String leetcodeUrl,
-        String sectionOrder
+        String sectionOrder,
+        String aboutFieldsConfig
 ) {}

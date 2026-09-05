@@ -28,6 +28,9 @@ public class Profile extends BaseEntity {
     
     private String sectionOrder = "about,skills,experience,projects,notes,contact";
 
+    @Column(columnDefinition = "TEXT")
+    private String aboutFieldsConfig;
+
     // ── Constructors ─────────────────────────────────────────────────────────
 
     public Profile() {}
@@ -136,5 +139,13 @@ public class Profile extends BaseEntity {
 
     public void setSectionOrder(String sectionOrder) {
         this.sectionOrder = sectionOrder;
+    }
+
+    public String getAboutFieldsConfig() {
+        return aboutFieldsConfig;
+    }
+
+    public void setAboutFieldsConfig(String aboutFieldsConfig) {
+        this.aboutFieldsConfig = aboutFieldsConfig;
     }
 }
