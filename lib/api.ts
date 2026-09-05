@@ -7,15 +7,15 @@ import { getToken, logout } from "./auth";
 
 const getBaseUrl = () => {
   if (typeof window === "undefined") {
-    return process.env.API_BASE_URL || "http://localhost:8080";
+    return process.env.API_BASE_URL || "http://127.0.0.1:8080";
   }
   return "";
 };
 
 // ── In-Memory Public API Cache ────────────────────────────────────────────────
-// Caches GET responses for public endpoints across client-side navigations.
-// The module is loaded once per browser session, so the Map persists as long
-// as the tab is open. TTL defaults to 60 seconds.
+// Caches GET responses for public endpoints across navigations.
+// TTL defaults to 60 seconds. Also prevents redundant/concurrent fetches
+// during static page generation in Next.js builds.
 
 const CACHE_TTL_MS = 60_000;
 
@@ -26,15 +26,10 @@ const _inflight = new Map<string, Promise<unknown>>();
 /**
  * Fetches a public (no-auth) endpoint with in-memory caching.
  * Concurrent callers for the same URL share a single in-flight Promise,
- * so even if three components call getProfile() simultaneously only one
- * network request is made.
+ * so even if multiple components call getProfile() simultaneously during build,
+ * only one network request is made.
  */
 async function cachedPublicFetch<T>(path: string): Promise<T> {
-  // Bypass in-memory cache on the server side (Node.js)
-  if (typeof window === "undefined") {
-    return apiFetch<T>(path, { skipAuth: true });
-  }
-
   // Return a valid cached result immediately
   const hit = _cache.get(path);
   if (hit && Date.now() - hit.ts < CACHE_TTL_MS) {
@@ -91,10 +86,27 @@ export async function apiFetch<T>(
   }
 
   const baseUrl = getBaseUrl();
-  const res = await fetch(`${baseUrl}${path}`, {
-    ...fetchOptions,
-    headers,
-  });
+  const controller = new AbortController();
+  // Server-side (build & SSR) timeout: 4s so static page generation never hangs on Vercel.
+  // Client-side timeout: 30s.
+  const timeoutMs = typeof window === "undefined" ? 4000 : 30000;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  let res: Response;
+  try {
+    res = await fetch(`${baseUrl}${path}`, {
+      ...fetchOptions,
+      headers,
+      signal: fetchOptions.signal || controller.signal,
+    });
+  } catch (err: any) {
+    if (err.name === "AbortError") {
+      throw new Error(`Request timed out after ${timeoutMs}ms: ${path}`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   // Auto-logout on 401
   if (res.status === 401) {
