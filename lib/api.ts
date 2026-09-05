@@ -466,6 +466,7 @@ export type ProfileEntry = {
   linkedinUrl: string;
   leetcodeUrl: string;
   sectionOrder: string;
+  aboutFieldsConfig?: string | null;
   createdAt: string;
   updatedAt: string;
 };

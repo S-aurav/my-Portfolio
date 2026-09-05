@@ -2,10 +2,38 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { personalInfo, certifications as staticCerts } from "@/lib/data";
+import { personalInfo } from "@/lib/data";
 import { CertificationEntry } from "@/lib/api";
 import { useScrollReveal } from "@/lib/hooks";
 import { useProfile } from "@/context/ProfileContext";
+
+// ── About field config (mirrors admin/profile/page.tsx) ─────────────────────
+
+type AboutFieldConfig = {
+  key: string;
+  label: string;
+  visible: boolean;
+  value: string;
+};
+
+const DEFAULT_ABOUT_FIELDS: AboutFieldConfig[] = [
+  { key: "location",  label: "Location",  visible: true, value: "" },
+  { key: "email",     label: "Email",     visible: true, value: "" },
+  { key: "currently", label: "Currently", visible: true, value: "Dista.ai" },
+  { key: "available", label: "Available", visible: true, value: "For opportunities" },
+];
+
+function parseAboutFields(json?: string | null): AboutFieldConfig[] {
+  if (!json) return DEFAULT_ABOUT_FIELDS.map(f => ({ ...f }));
+  try {
+    const parsed = JSON.parse(json) as AboutFieldConfig[];
+    const keySet = new Set(parsed.map(f => f.key));
+    const extras = DEFAULT_ABOUT_FIELDS.filter(f => !keySet.has(f.key));
+    return [...parsed, ...extras];
+  } catch { return DEFAULT_ABOUT_FIELDS.map(f => ({ ...f })); }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function About({ initialCerts }: { initialCerts?: CertificationEntry[] | null }) {
   const ref = useScrollReveal();
@@ -17,34 +45,39 @@ export default function About({ initialCerts }: { initialCerts?: CertificationEn
     if (initialCerts !== undefined && initialCerts !== null) {
       // Server is online. Cache the response (even if empty)
       localStorage.setItem("cached_certs", JSON.stringify(initialCerts));
-      if (initialCerts.length > 0) {
-        setCerts(initialCerts);
-      } else {
-        // Database is empty. Display static fallbacks
-        setCerts(staticCerts.map((c, i) => ({ id: String(i), name: c, displayOrder: i, createdAt: '', updatedAt: '' })));
-      }
+      setCerts(initialCerts);
     } else {
       // Server is offline. Load from localStorage
       const cached = localStorage.getItem("cached_certs");
       if (cached) {
         try {
           const parsed = JSON.parse(cached);
-          if (parsed && parsed.length > 0) {
+          if (Array.isArray(parsed)) {
             setCerts(parsed as CertificationEntry[]);
             return;
           }
         } catch {}
       }
-      // If no cache, display static fallbacks
-      setCerts(staticCerts.map((c, i) => ({ id: String(i), name: c, displayOrder: i, createdAt: '', updatedAt: '' })));
+      setCerts([]);
     }
   }, [initialCerts]);
 
   const name         = profile?.name        ?? personalInfo.name;
   const bio          = profile?.bio         ?? personalInfo.bio;
-  const location     = profile?.location    ?? personalInfo.location;
-  const email        = profile?.email       ?? personalInfo.email;
   const profileImage = profile?.profileImage || personalInfo.profileImage;
+
+  // ── Resolve info-grid fields ───────────────────────────────────────────────
+  const aboutFields = parseAboutFields(profile?.aboutFieldsConfig);
+
+  const resolvedFields = aboutFields
+    .filter(f => f.visible)
+    .map(f => {
+      let value = f.value;
+      if (f.key === "location") value = f.value || profile?.location || personalInfo.location;
+      if (f.key === "email")    value = f.value || profile?.email    || personalInfo.email;
+      return { label: f.label, value };
+    })
+    .filter(f => f.value); // don't render a row whose value is empty
 
   return (
     <section id="about" className="section">
@@ -74,20 +107,17 @@ export default function About({ initialCerts }: { initialCerts?: CertificationEn
               {bio}
             </p>
 
-            {/* Info grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px', marginBottom: '20px' }}>
-              {[
-                { label: 'Location', value: location },
-                { label: 'Email', value: email },
-                { label: 'Currently', value: 'Dista.ai' },
-                { label: 'Available', value: 'For opportunities' },
-              ].map((item) => (
-                <div key={item.label} style={{ display: 'flex', gap: '8px', fontSize: '0.85rem' }}>
-                  <span style={{ color: 'var(--text-muted)', fontWeight: 600, minWidth: 70, letterSpacing: '0.02em' }}>{item.label}:</span>
-                  <span style={{ color: 'var(--text-secondary)' }}>{item.value}</span>
-                </div>
-              ))}
-            </div>
+            {/* Info grid — driven by aboutFieldsConfig */}
+            {resolvedFields.length > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px', marginBottom: '20px' }}>
+                {resolvedFields.map((item) => (
+                  <div key={item.label} style={{ display: 'flex', gap: '8px', fontSize: '0.85rem' }}>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 600, minWidth: 70, letterSpacing: '0.02em' }}>{item.label}:</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>{item.value}</span>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Certifications */}
             {certs.length > 0 && (

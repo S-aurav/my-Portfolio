@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { adminApi, ProfileEntry, ProfileFormData } from "@/lib/api";
+import { adminApi, ProfileFormData } from "@/lib/api";
 import { personalInfo } from "@/lib/data";
 
 const inputStyle: React.CSSProperties = {
@@ -26,6 +26,31 @@ const sectionLabels: Record<string, string> = {
 
 const defaultOrder = ["about", "skills", "experience", "projects", "notes", "contact"];
 
+type AboutFieldConfig = {
+  key: string;
+  label: string;
+  visible: boolean;
+  value: string;
+};
+
+const DEFAULT_ABOUT_FIELDS: AboutFieldConfig[] = [
+  { key: "location",  label: "Location",  visible: true, value: "" },
+  { key: "email",     label: "Email",     visible: true, value: "" },
+  { key: "currently", label: "Currently", visible: true, value: "Dista.ai" },
+  { key: "available", label: "Available", visible: true, value: "For opportunities" },
+];
+
+function parseAboutFields(json?: string | null): AboutFieldConfig[] {
+  if (!json) return DEFAULT_ABOUT_FIELDS.map(f => ({ ...f }));
+  try {
+    const parsed = JSON.parse(json) as AboutFieldConfig[];
+    // merge so any new keys added to defaults still appear
+    const keySet = new Set(parsed.map(f => f.key));
+    const extras = DEFAULT_ABOUT_FIELDS.filter(f => !keySet.has(f.key));
+    return [...parsed, ...extras];
+  } catch { return DEFAULT_ABOUT_FIELDS.map(f => ({ ...f })); }
+}
+
 export default function AdminProfile() {
   const [form, setForm] = useState<ProfileFormData>({
     name: personalInfo.name,
@@ -49,6 +74,9 @@ export default function AdminProfile() {
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [aboutFields, setAboutFields] = useState<AboutFieldConfig[]>(
+    DEFAULT_ABOUT_FIELDS.map(f => ({ ...f }))
+  );
 
   useEffect(() => {
     const handleResize = () => {
@@ -86,6 +114,7 @@ export default function AdminProfile() {
           if (res.data.sectionOrder) {
             setSections(res.data.sectionOrder.split(",").map(s => s.trim()));
           }
+          setAboutFields(parseAboutFields(res.data.aboutFieldsConfig));
         }
       })
       .catch(() => {})
@@ -145,7 +174,7 @@ export default function AdminProfile() {
     setSuccess("");
     setError("");
     try {
-      await adminApi.saveProfile(form);
+      await adminApi.saveProfile({ ...form, aboutFieldsConfig: JSON.stringify(aboutFields) });
       setSuccess("Profile saved successfully!");
       setTimeout(() => setSuccess(""), 3000);
     } catch (err: any) {
@@ -173,15 +202,100 @@ export default function AdminProfile() {
           gap: isMobile ? 16 : 24
         }}>
           {/* Left col */}
-          <div className="card" style={{ padding: "28px 28px 20px" }}>
-            <h2 style={{ fontFamily: "Montserrat, sans-serif", fontSize: "0.9rem", fontWeight: 700, marginBottom: 20, color: "var(--text-primary)" }}>Personal Info</h2>
-            <Field label="Full Name" name="name" value={form.name} onChange={handleChange} />
-            <Field label="Role / Title" name="role" value={form.role} onChange={handleChange} />
-            <Field label="Location" name="location" value={form.location} onChange={handleChange} />
-            <Field label="Email" name="email" type="email" value={form.email} onChange={handleChange} />
-            <Field label="Phone" name="phone" type="tel" value={form.phone} onChange={handleChange} />
-            <Field label="Tagline" name="tagline" textarea value={form.tagline} onChange={handleChange} />
-            <Field label="Bio" name="bio" textarea value={form.bio} onChange={handleChange} />
+          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+            <div className="card" style={{ padding: "28px 28px 20px" }}>
+              <h2 style={{ fontFamily: "Montserrat, sans-serif", fontSize: "0.9rem", fontWeight: 700, marginBottom: 20, color: "var(--text-primary)" }}>Personal Info</h2>
+              <Field label="Full Name" name="name" value={form.name} onChange={handleChange} />
+              <Field label="Role / Title" name="role" value={form.role} onChange={handleChange} />
+              <Field label="Location" name="location" value={form.location} onChange={handleChange} />
+              <Field label="Email" name="email" type="email" value={form.email} onChange={handleChange} />
+              <Field label="Phone" name="phone" type="tel" value={form.phone} onChange={handleChange} />
+              <Field label="Tagline" name="tagline" textarea value={form.tagline} onChange={handleChange} />
+              <Field label="Bio" name="bio" textarea value={form.bio} onChange={handleChange} />
+            </div>
+
+            {/* About Card Fields */}
+            <div className="card" style={{ padding: "28px 28px 20px" }}>
+              <h2 style={{ fontFamily: "Montserrat, sans-serif", fontSize: "0.9rem", fontWeight: 700, marginBottom: 6, color: "var(--text-primary)" }}>About Card Fields</h2>
+              <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginBottom: 18 }}>Toggle visibility, rename labels, and set custom values for the About section info grid.</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {aboutFields.map((field, idx) => {
+                  const isProfileField = field.key === "location" || field.key === "email";
+                  return (
+                    <div key={field.key} style={{ padding: "14px 14px 10px", border: "1px solid var(--border-color)", background: "var(--bg-main)" }}>
+                      {/* Row 1: toggle + key name */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const next = [...aboutFields];
+                            next[idx] = { ...next[idx], visible: !next[idx].visible };
+                            setAboutFields(next);
+                          }}
+                          title={field.visible ? "Hide this field" : "Show this field"}
+                          style={{
+                            flexShrink: 0,
+                            width: 36, height: 20,
+                            background: field.visible ? "var(--accent)" : "var(--border-color)",
+                            border: "none", borderRadius: 10,
+                            cursor: "pointer",
+                            position: "relative",
+                            transition: "background 0.2s",
+                          }}
+                        >
+                          <span style={{
+                            position: "absolute", top: 2,
+                            left: field.visible ? 18 : 2,
+                            width: 16, height: 16,
+                            background: "#fff", borderRadius: "50%",
+                            transition: "left 0.2s",
+                            display: "block",
+                          }} />
+                        </button>
+                        <span style={{ fontSize: "0.78rem", fontWeight: 700, color: field.visible ? "var(--text-primary)" : "var(--text-light)", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                          {field.key}
+                        </span>
+                        {!field.visible && (
+                          <span style={{ fontSize: "0.7rem", color: "var(--text-light)", fontStyle: "italic" }}>(hidden)</span>
+                        )}
+                      </div>
+                      {/* Row 2: label + value */}
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                        <div>
+                          <label style={{ ...labelStyle, marginBottom: 4 }}>Display Label</label>
+                          <input
+                            value={field.label}
+                            onChange={e => {
+                              const next = [...aboutFields];
+                              next[idx] = { ...next[idx], label: e.target.value };
+                              setAboutFields(next);
+                            }}
+                            style={{ ...inputStyle, padding: "7px 10px", fontSize: "0.82rem" }}
+                            placeholder="e.g. Current Company"
+                          />
+                        </div>
+                        <div>
+                          <label style={{ ...labelStyle, marginBottom: 4 }}>
+                            {isProfileField ? "Value (from profile field)" : "Value"}
+                          </label>
+                          <input
+                            value={isProfileField ? (field.key === "location" ? form.location : form.email) : field.value}
+                            readOnly={isProfileField}
+                            onChange={isProfileField ? undefined : e => {
+                              const next = [...aboutFields];
+                              next[idx] = { ...next[idx], value: e.target.value };
+                              setAboutFields(next);
+                            }}
+                            style={{ ...inputStyle, padding: "7px 10px", fontSize: "0.82rem", opacity: isProfileField ? 0.55 : 1, cursor: isProfileField ? "default" : "text" }}
+                            placeholder={isProfileField ? `Comes from ${field.key} above` : "e.g. Dista.ai"}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           {/* Right col */}
