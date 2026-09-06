@@ -40,6 +40,8 @@ export const metadata: Metadata = {
 import { publicApi } from "@/lib/api";
 import { ProfileProvider } from "@/context/ProfileContext";
 
+export const revalidate = 60;
+
 export default async function RootLayout({
   children,
 }: Readonly<{

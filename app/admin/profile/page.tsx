@@ -115,6 +115,9 @@ export default function AdminProfile() {
             setSections(res.data.sectionOrder.split(",").map(s => s.trim()));
           }
           setAboutFields(parseAboutFields(res.data.aboutFieldsConfig));
+          try {
+            localStorage.setItem("cached_profile", JSON.stringify(res.data));
+          } catch {}
         }
       })
       .catch(() => {})
@@ -174,7 +177,12 @@ export default function AdminProfile() {
     setSuccess("");
     setError("");
     try {
-      await adminApi.saveProfile({ ...form, aboutFieldsConfig: JSON.stringify(aboutFields) });
+      const res = await adminApi.saveProfile({ ...form, aboutFieldsConfig: JSON.stringify(aboutFields) });
+      if (res.data) {
+        try {
+          localStorage.setItem("cached_profile", JSON.stringify(res.data));
+        } catch {}
+      }
       setSuccess("Profile saved successfully!");
       setTimeout(() => setSuccess(""), 3000);
     } catch (err: any) {
